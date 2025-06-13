@@ -1,0 +1,10 @@
+# WordPress plugin Git ignore
+.DS_Store
+*.log
+node_modules/
+vendor/
+.env
+.idea/
+*.zip
+*.bak
+*.tmp
