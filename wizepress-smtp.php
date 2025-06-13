@@ -21,9 +21,9 @@ defined('ABSPATH') || exit;
 
 define('WZP_SMTP_TABLE', $GLOBALS['wpdb']->prefix . 'wzp_email_logs');
 
-require_once plugin_dir_path(__FILE__) . 'admin-settings.php';
-require_once plugin_dir_path(__FILE__) . 'email-logger.php';
-require_once plugin_dir_path(__FILE__) . 'admin-log-viewer.php';
+require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
+require_once plugin_dir_path(__FILE__) . 'admin/log-viewer.php';
+require_once plugin_dir_path(__FILE__) . 'includes/email-logger.php';
 
 add_action('admin_menu', function () {
     add_options_page('WizePress SMTP', 'WizePress SMTP', 'manage_options', 'wzp-smtp', 'wzp_render_tabs');
@@ -71,3 +71,15 @@ function wzp_custom_footer_credit($footer_text) {
 
     return $footer_text;
 }
+
+function wzp_enqueue_admin_assets($hook) {
+    if (strpos($hook, 'wzp-smtp') === false) {
+        return;
+    }
+    wp_enqueue_style( 'wzp-admin-style', plugin_dir_url(__FILE__) . 'assets/css/admin.css', [], '1.0.0' );
+    wp_enqueue_script( 'wzp-admin-script', plugin_dir_url(__FILE__) . 'assets/js/admin.js', ['jquery'], '1.0.0', true );
+    wp_localize_script( 'wzp-admin-script', 'wzpAjax', [
+        'ajax_url' => admin_url('admin-ajax.php')
+    ]);
+}
+add_action( 'admin_enqueue_scripts', 'wzp_enqueue_admin_assets' );

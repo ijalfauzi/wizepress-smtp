@@ -1,0 +1,75 @@
+#email-log-modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+}
+
+#email-log-modal {
+    background: #fff;
+    padding: 20px;
+    width: 90%;
+    max-width: 900px;
+    margin: 5% auto;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+    position: relative;
+    z-index: 9999;
+}
+
+#email-log-modal h2 {
+    margin-top: 0;
+    font-size: 1.4em;
+}
+
+#email-log-modal table {
+    margin-bottom: 1em;
+}
+
+#email-log-modal th {
+    text-align: left;
+    padding-right: 10px;
+    vertical-align: top;
+    width: 20%;
+}
+
+#email-log-modal .modal-toolbar {
+    margin: 1rem 0;
+}
+
+#email-log-modal textarea,
+#email-log-modal iframe {
+    width: 100%;
+    height: 300px;
+    display: none;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    font-family: monospace;
+    padding: 10px;
+    border-radius: 4px;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+#email-log-modal-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: #eee;
+    border: none;
+    border-radius: 5px;
+    font-size: 1.2em;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.2s ease;
+}
+
+#email-log-modal-close:hover {
+    background: #bbb;
+}

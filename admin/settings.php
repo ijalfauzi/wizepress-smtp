@@ -68,7 +68,7 @@ function wzp_smtp_settings_page() {
                 </td>
             </tr>
         </table>
-        <?php submit_button('Send Test Email'); ?>
+        <?php submit_button('Send Test Email', 'primary', 'wzp_submit_test_email', false); ?>
     </form>
     <?php
 }
