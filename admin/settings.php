@@ -12,26 +12,36 @@ function wzp_smtp_settings_page() {
         $body = "Hello,\n\nThis is a test email sent from WizePress SMTP plugin.\n\nIf you received this, your SMTP settings are working!";
         $headers = ['Content-Type: text/plain; charset=UTF-8'];
 
+        // Define full mail_args before wp_mail() to avoid missing data in log
         $mail_args = [
             'to'          => $to,
             'subject'     => $subject,
             'message'     => $body,
             'headers'     => $headers,
+            'attachments' => [],
+            'origin'      => 'settings',
         ];
 
-        if (wp_mail(
+        $result = wp_mail(
             $mail_args['to'],
             $mail_args['subject'],
             $mail_args['message'],
             $mail_args['headers']
-        )) {
+        );
+
+        // Manual log to prevent wp_mail_failed from duplicating entry
+        if (function_exists('wzp_insert_log')) {
+            wzp_insert_log($mail_args, $result, $result ? null : 'Failed to send test email from settings form.');
+        }
+
+        if ($result) {
             echo '<div class="notice notice-success"><p>✅ Test email sent to <strong>' . esc_html($to) . '</strong></p></div>';
         } else {
             echo '<div class="notice notice-error"><p>❌ Failed to send test email. Please check your SMTP settings.</p></div>';
         }
     }
-
     ?>
+
     <form method="post" action="options.php">
         <?php
         settings_fields('wzp_smtp_settings_group');
