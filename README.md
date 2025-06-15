@@ -20,6 +20,10 @@ WizePress SMTP helps you configure WordPress email settings easily and provides 
 2. Activate the plugin from **Plugins > Installed Plugins**
 3. Go to **Settings > WizePress SMTP** to configure
 
+## 📄 Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for version history and updates.
+
 ## 🧑‍💻 Author
 
 Developed by [Ijal Fauzi](https://github.com/ijalfauzi)
