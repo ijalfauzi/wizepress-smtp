@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-06-13
+
+### Added
+- Attachments count and filename display in log viewer.
+- IP address logging for each email sent.
+- Email result indicator in log table.
+- HTML preview support with clean iframe viewer.
+- WordPress timezone-based formatting for "Sent At".
+- Manual logging for test emails to prevent duplicates.
+
+### Changed
+- `to_email` now stored as a clean string instead of serialized array for better readability.
+
 ## [1.0.0] - 2025-06-13
 
 ### Added
