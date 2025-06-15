@@ -3,7 +3,7 @@
  * Plugin Name: WizePress SMTP
  * Plugin URI: https://wizepress.id/plugin/wizepress-smtp
  * Description: Ensure your emails reach the inbox — simple SMTP setup and smart logging for WordPress.
- * Version: 1.0.0
+ * Version: 1.1.0
  * Author: Ijal Fauzi
  * Author URI: https://ijalfauzi.com
  * License: GPLv2 or later
@@ -65,7 +65,7 @@ function wzp_custom_footer_credit($footer_text) {
     $screen = get_current_screen();
     
     if ($screen && strpos($screen->base, 'wzp-smtp') !== false) {
-        $custom_credit = '<span style="font-style: italic;">You\'re using <a href="https://wizepress.id/plugin/wizepress-smtp" target="_blank" style="text-decoration:underline;">WizePress SMTP</a> v1.0.0 by <a href="https://ijalfauzi.com" target="_blank" style="text-decoration:underline;">Ijal Fauzi</a></span><br>';
+        $custom_credit = '<span style="font-style: italic;">You\'re using <a href="https://wizepress.id/plugin/wizepress-smtp" target="_blank" style="text-decoration:underline;">WizePress SMTP</a> v1.1.0 by <a href="https://ijalfauzi.com" target="_blank" style="text-decoration:underline;">Ijal Fauzi</a></span><br>';
         return $custom_credit . $footer_text;
     }
 
