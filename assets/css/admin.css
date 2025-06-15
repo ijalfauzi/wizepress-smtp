@@ -73,3 +73,15 @@
 #email-log-modal-close:hover {
     background: #bbb;
 }
+
+#email-html-preview {
+    display: none;
+    width: 100%;
+    height: 300px;
+    border: 1px solid #ccd0d4;
+    border-radius: 4px;
+    padding: 8px;
+    background: white;
+    box-sizing: border-box;
+    overflow: auto;
+}
