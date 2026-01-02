@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-01-02
+
+### Fixed
+- Email content modal height increased to 500px for better viewing
+- Modal now properly centered vertically and horizontally using flexbox
+- Email log sorting now uses ID DESC as secondary sort for consistent ordering
+
+### Added
+- Build script (`build-release.sh`) for creating GitHub-compatible release packages
+- Release instructions documentation
+
 ## [1.2.0] - 2026-01-02
 
 ### Added

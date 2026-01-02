@@ -3,7 +3,7 @@
  * Plugin Name: WizePress SMTP
  * Plugin URI: https://wizepress.id/plugin/wizepress-smtp
  * Description: Ensure your emails reach the inbox — simple SMTP setup and smart logging for WordPress.
- * Version: 1.2.0
+ * Version: 1.2.1
  * Author: Ijal Fauzi
  * Author URI: https://ijalfauzi.com
  * License: GPLv2 or later
@@ -19,7 +19,7 @@
 
 defined('ABSPATH') || exit;
 
-define('WZP_SMTP_VERSION', '1.2.0');
+define('WZP_SMTP_VERSION', '1.2.1');
 define('WZP_SMTP_TABLE', $GLOBALS['wpdb']->prefix . 'wzp_email_logs');
 
 require_once plugin_dir_path(__FILE__) . 'admin/settings.php';
