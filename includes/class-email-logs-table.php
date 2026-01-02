@@ -216,7 +216,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
         // Get items
         $this->items = $wpdb->get_results(
             $wpdb->prepare(
-                "SELECT * FROM $table WHERE $where ORDER BY $orderby $order LIMIT %d OFFSET %d",
+                "SELECT * FROM $table WHERE $where ORDER BY $orderby $order, id DESC LIMIT %d OFFSET %d",
                 $per_page,
                 $offset
             )

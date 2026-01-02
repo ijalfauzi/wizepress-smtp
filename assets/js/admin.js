@@ -19,7 +19,7 @@ jQuery(document).ready(function ($) {
                 $("#email-html-preview").attr("srcdoc", res.message);
                 $("#email-raw").show();
                 $("#email-html-preview").hide();
-                $("#email-log-modal-overlay").fadeIn(200);
+                $("#email-log-modal-overlay").css('display', 'flex').hide().fadeIn(200);
             } else {
                 alert(response.data || "Failed to load email log.");
             }
