@@ -19,8 +19,11 @@ function wzp_smtp_settings_page() {
             'message'     => $body,
             'headers'     => $headers,
             'attachments' => [],
-            'origin'      => 'settings',
         ];
+
+        // Set flag to skip hook logging (we'll log manually)
+        global $wzp_skip_hook_logging;
+        $wzp_skip_hook_logging = true;
 
         $result = wp_mail(
             $mail_args['to'],
@@ -29,7 +32,10 @@ function wzp_smtp_settings_page() {
             $mail_args['headers']
         );
 
-        // Manual log to prevent wp_mail_failed from duplicating entry
+        // Reset flag
+        $wzp_skip_hook_logging = false;
+
+        // Manual log for test email
         if (function_exists('wzp_insert_log')) {
             wzp_insert_log($mail_args, $result, $result ? null : 'Failed to send test email from settings form.');
         }
@@ -54,6 +60,7 @@ function wzp_smtp_settings_page() {
             <td><input type="number" name="wzp_smtp_settings[smtp_port]" value="<?php echo esc_attr($options['smtp_port'] ?? 465); ?>" class="small-text" /></td></tr>
             <tr><th>Encryption</th>
             <td><select name="wzp_smtp_settings[smtp_secure]">
+                <option value="" <?php selected($options['smtp_secure'] ?? '', ''); ?>>None</option>
                 <option value="ssl" <?php selected($options['smtp_secure'] ?? '', 'ssl'); ?>>SSL</option>
                 <option value="tls" <?php selected($options['smtp_secure'] ?? '', 'tls'); ?>>TLS</option>
             </select></td></tr>
@@ -73,7 +80,7 @@ function wzp_smtp_settings_page() {
             <tr>
                 <th scope="row"><label for="wzp_test_email">To Email</label></th>
                 <td>
-                    <input type="email" name="wzp_test_email" required class="regular-text" />
+                    <input type="email" name="wzp_test_email" id="wzp_test_email" required class="regular-text" />
                     <p class="description">Enter an email address to send a test message.</p>
                 </td>
             </tr>
@@ -84,5 +91,38 @@ function wzp_smtp_settings_page() {
 }
 
 add_action('admin_init', function () {
-    register_setting('wzp_smtp_settings_group', 'wzp_smtp_settings');
+    register_setting('wzp_smtp_settings_group', 'wzp_smtp_settings', [
+        'sanitize_callback' => 'wzp_sanitize_settings'
+    ]);
 });
+
+/**
+ * Sanitize SMTP settings before saving
+ */
+function wzp_sanitize_settings($input) {
+    $sanitized = [];
+
+    $sanitized['smtp_host'] = isset($input['smtp_host'])
+        ? sanitize_text_field($input['smtp_host'])
+        : '';
+
+    $sanitized['smtp_port'] = isset($input['smtp_port'])
+        ? absint($input['smtp_port'])
+        : 465;
+
+    $sanitized['smtp_secure'] = isset($input['smtp_secure']) && in_array($input['smtp_secure'], ['ssl', 'tls', ''], true)
+        ? $input['smtp_secure']
+        : 'ssl';
+
+    $sanitized['smtp_user'] = isset($input['smtp_user'])
+        ? sanitize_text_field($input['smtp_user'])
+        : '';
+
+    // Password: keep existing if empty, otherwise save new value
+    $existing = get_option('wzp_smtp_settings', []);
+    $sanitized['smtp_pass'] = !empty($input['smtp_pass'])
+        ? $input['smtp_pass']
+        : ($existing['smtp_pass'] ?? '');
+
+    return $sanitized;
+}

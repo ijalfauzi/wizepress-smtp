@@ -32,4 +32,4 @@ Developed by [Ijal Fauzi](https://github.com/ijalfauzi)
 
 ---
 
-WizePress SMTP | Version 1.1.0
+WizePress SMTP | Version 1.2.0
