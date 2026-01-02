@@ -85,3 +85,38 @@
     box-sizing: border-box;
     overflow: auto;
 }
+
+/* Status Icons */
+.wzp-status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 14px;
+    font-weight: bold;
+    color: white;
+}
+
+.wzp-status-success {
+    background-color: #46b450;
+}
+
+.wzp-status-success::before {
+    content: '✓';
+}
+
+.wzp-status-failed {
+    background-color: #dc3232;
+}
+
+.wzp-status-failed::before {
+    content: '✕';
+}
+
+/* Status icons in notices */
+.notice .wzp-status-icon {
+    margin-right: 8px;
+    vertical-align: middle;
+}

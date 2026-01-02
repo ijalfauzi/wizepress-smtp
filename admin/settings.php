@@ -35,9 +35,9 @@ function wzp_smtp_settings_page() {
         }
 
         if ($result) {
-            echo '<div class="notice notice-success"><p>✅ Test email sent to <strong>' . esc_html($to) . '</strong></p></div>';
+            echo '<div class="notice notice-success"><p><span class="wzp-status-icon wzp-status-success"></span> Test email sent to <strong>' . esc_html($to) . '</strong></p></div>';
         } else {
-            echo '<div class="notice notice-error"><p>❌ Failed to send test email. Please check your SMTP settings.</p></div>';
+            echo '<div class="notice notice-error"><p><span class="wzp-status-icon wzp-status-failed"></span> Failed to send test email. Please check your SMTP settings.</p></div>';
         }
     }
     ?>

@@ -55,7 +55,7 @@ function wzp_email_logs_page() {
         }
         echo '</td>';
         echo '<td>' . esc_html($log->ip_address ?? '—') . '</td>';
-        echo '<td>' . ($log->result ? '✅' : '❌') . '</td>';
+        echo '<td><span class="wzp-status-icon ' . ($log->result ? 'wzp-status-success' : 'wzp-status-failed') . '"></span></td>';
         echo '</tr>';
     }
 
