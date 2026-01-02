@@ -185,3 +185,27 @@
 .wzp-email-logs-wrap .row-actions .delete a:hover {
     color: #a00;
 }
+
+/* Row actions resend link */
+.wzp-email-logs-wrap .row-actions .resend a {
+    color: #0073aa;
+}
+
+.wzp-email-logs-wrap .row-actions .resend a:hover {
+    color: #005177;
+}
+
+/* Error message styling in modal */
+.wzp-error-text {
+    color: #dc3232;
+    font-weight: 500;
+}
+
+#log-error-row th {
+    color: #dc3232;
+}
+
+/* Export button spacing */
+.tablenav .actions a.button {
+    margin-right: 5px;
+}

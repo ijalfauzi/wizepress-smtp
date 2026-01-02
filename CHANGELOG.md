@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-01-02
+
+### Added
+- **Email Resend Feature**: Resend any logged email directly from the log viewer.
+- **Export to CSV/Excel/PDF**: Download email logs in CSV, Excel (.xls), or print-friendly HTML format.
+- **Error Details in Modal**: Failed emails now display the error message in the view content modal.
+
+### Changed
+- Export buttons now grouped in toolbar with filter-aware filenames.
+- Exports use chronological ordering (oldest first) for audit trails.
+
 ## [1.2.1] - 2026-01-02
 
 ### Fixed

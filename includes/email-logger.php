@@ -1,10 +1,10 @@
 <?php
 
-// Store last mail args for fallback in wp_mail_failed
+// Last mail args for wp_mail_failed fallback
 global $wzp_last_mail_args;
 $wzp_last_mail_args = null;
 
-// Flag to skip hook logging when manually logging
+// Skip logging flag for manual operations
 global $wzp_skip_hook_logging;
 $wzp_skip_hook_logging = false;
 
@@ -35,13 +35,12 @@ function wzp_create_email_log_table() {
     dbDelta($sql);
 }
 
-// Register success and failure logging hooks
+// Log successful emails
 add_action('wp_mail_succeeded', function($mail) {
     global $wzp_last_mail_args, $wzp_skip_hook_logging;
 
     $wzp_last_mail_args = $mail; // cache for fallback
 
-    // Skip if manually logging (e.g., test email from settings)
     if ($wzp_skip_hook_logging) {
         return;
     }
@@ -49,10 +48,10 @@ add_action('wp_mail_succeeded', function($mail) {
     wzp_insert_log($mail, true, null);
 });
 
+// Log failed emails
 add_action('wp_mail_failed', function($wp_error) {
     global $wzp_last_mail_args, $wzp_skip_hook_logging;
 
-    // Skip if manually logging (e.g., test email from settings)
     if ($wzp_skip_hook_logging) {
         return;
     }
@@ -60,7 +59,7 @@ add_action('wp_mail_failed', function($wp_error) {
     $mail = method_exists($wp_error, 'get_data') ? $wp_error->get_data() : [];
     $mail = is_array($mail) ? $mail : [];
 
-    // Fallback: patch in data from previous success call
+    // Patch missing data from cached successful call
     foreach (['subject', 'message'] as $key) {
         if (empty($mail[$key]) && !empty($wzp_last_mail_args[$key])) {
             $mail[$key] = $wzp_last_mail_args[$key];
@@ -72,7 +71,9 @@ add_action('wp_mail_failed', function($wp_error) {
     wzp_insert_log($mail, false, $error_msg);
 });
 
-// Main log insert function
+/**
+ * Insert email log entry
+ */
 function wzp_insert_log($mail, $success = true, $error = null) {
     global $wpdb;
 
@@ -115,7 +116,9 @@ function wzp_insert_log($mail, $success = true, $error = null) {
     ]);
 }
 
-// Extract the From: address from headers
+/**
+ * Extract From address from headers
+ */
 function wzp_extract_from_header($headers) {
     foreach ((array) $headers as $header) {
         if (stripos($header, 'From:') === 0) {
@@ -128,14 +131,12 @@ function wzp_extract_from_header($headers) {
     return '';
 }
 
-// Handle AJAX for viewing individual email log
+// AJAX: Get email log
 add_action('wp_ajax_wzp_get_email_log', function () {
-    // Verify nonce
     if (!check_ajax_referer('wzp_ajax_nonce', 'nonce', false)) {
         wp_send_json_error('Invalid security token.');
     }
 
-    // Check capability
     if (!current_user_can('manage_options')) {
         wp_send_json_error('Unauthorized.');
     }
@@ -156,20 +157,21 @@ add_action('wp_ajax_wzp_get_email_log', function () {
     $headers = is_serialized($log['headers']) ? maybe_unserialize($log['headers']) : $log['headers'];
 
     wp_send_json_success([
-        'to'       => is_array($to) ? implode(', ', $to) : $to,
-        'subject'  => $log['subject'] ?? '',
-        'message'  => $log['message'] ?? '',
-        'headers'  => $headers,
-        'sent_at'  => date_i18n(
+        'to'            => is_array($to) ? implode(', ', $to) : $to,
+        'subject'       => $log['subject'] ?? '',
+        'message'       => $log['message'] ?? '',
+        'headers'       => $headers,
+        'sent_at'       => date_i18n(
             get_option('date_format') . ' ' . get_option('time_format'),
             strtotime(get_date_from_gmt($log['sent_at']))
-        )
+        ),
+        'result'        => (int) $log['result'],
+        'error_message' => $log['error_message'] ?? ''
     ]);
 });
 
-// Handle AJAX for deleting email log
+// AJAX: Delete email log
 add_action('wp_ajax_wzp_delete_email_log', function () {
-    // Check capability
     if (!current_user_can('manage_options')) {
         wp_send_json_error('Unauthorized.');
     }
@@ -177,7 +179,6 @@ add_action('wp_ajax_wzp_delete_email_log', function () {
     $id = intval($_POST['id'] ?? 0);
     $nonce = sanitize_text_field($_POST['nonce'] ?? '');
 
-    // Verify nonce
     if (!wp_verify_nonce($nonce, 'wzp_delete_log_' . $id)) {
         wp_send_json_error('Invalid security token.');
     }
@@ -195,4 +196,59 @@ add_action('wp_ajax_wzp_delete_email_log', function () {
     }
 
     wp_send_json_success('Log deleted successfully.');
+});
+
+// AJAX: Resend email
+add_action('wp_ajax_wzp_resend_email', function () {
+    if (!check_ajax_referer('wzp_ajax_nonce', 'nonce', false)) {
+        wp_send_json_error('Invalid security token.');
+    }
+
+    if (!current_user_can('manage_options')) {
+        wp_send_json_error('Unauthorized.');
+    }
+
+    global $wpdb;
+    $id = intval($_POST['id'] ?? 0);
+
+    $log = $wpdb->get_row(
+        $wpdb->prepare("SELECT * FROM " . WZP_SMTP_TABLE . " WHERE id = %d", $id),
+        ARRAY_A
+    );
+
+    if (!$log) {
+        wp_send_json_error('Log not found.');
+    }
+
+    $to = is_serialized($log['to_email']) ? maybe_unserialize($log['to_email']) : $log['to_email'];
+    $subject = $log['subject'];
+    $message = $log['message'];
+    $headers = is_serialized($log['headers']) ? maybe_unserialize($log['headers']) : $log['headers'];
+
+    if (is_array($headers)) {
+        $headers = implode("\r\n", $headers);
+    }
+
+    // Skip auto-logging, we'll log manually with "(Resent)" suffix
+    global $wzp_skip_hook_logging;
+    $wzp_skip_hook_logging = true;
+
+    $result = wp_mail($to, $subject, $message, $headers);
+
+    $wzp_skip_hook_logging = false;
+
+    $mail_args = [
+        'to'          => $to,
+        'subject'     => $subject . ' (Resent)',
+        'message'     => $message,
+        'headers'     => $headers,
+        'attachments' => [],
+    ];
+    wzp_insert_log($mail_args, $result, $result ? null : 'Failed to resend email.');
+
+    if ($result) {
+        wp_send_json_success('Email resent successfully!');
+    } else {
+        wp_send_json_error('Failed to resend email. Please check your SMTP settings.');
+    }
 });

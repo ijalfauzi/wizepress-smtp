@@ -71,6 +71,10 @@ class WZP_Email_Logs_Table extends WP_List_Table {
                 '<a href="#" class="view-email" data-id="%d">View Content</a>',
                 $item->id
             ),
+            'resend' => sprintf(
+                '<a href="#" class="resend-email" data-id="%d">Resend</a>',
+                $item->id
+            ),
             'delete' => sprintf(
                 '<a href="#" class="delete-email" data-id="%d" data-nonce="%s">Delete</a>',
                 $item->id,
@@ -283,6 +287,25 @@ class WZP_Email_Logs_Table extends WP_List_Table {
             <?php if ($has_filter) : ?>
                 <a href="<?php echo esc_url(admin_url('options-general.php?page=wzp-smtp&tab=logs')); ?>" class="button">Clear</a>
             <?php endif; ?>
+        </div>
+        <div class="alignleft actions wzp-export-actions">
+            <?php
+            $base_params = [
+                'page'   => 'wzp-smtp',
+                'tab'    => 'logs',
+                's'      => $search,
+                'status' => $status,
+                'm'      => $date,
+                '_wpnonce' => wp_create_nonce('wzp_export')
+            ];
+
+            $export_csv_url = add_query_arg(array_merge($base_params, ['action' => 'export_csv']), admin_url('options-general.php'));
+            $export_excel_url = add_query_arg(array_merge($base_params, ['action' => 'export_excel']), admin_url('options-general.php'));
+            $export_print_url = add_query_arg(array_merge($base_params, ['action' => 'export_print']), admin_url('options-general.php'));
+            ?>
+            <a href="<?php echo esc_url($export_csv_url); ?>" class="button" title="Download as CSV">CSV</a>
+            <a href="<?php echo esc_url($export_excel_url); ?>" class="button" title="Download as Excel">Excel</a>
+            <a href="<?php echo esc_url($export_print_url); ?>" class="button" target="_blank" title="Print or Save as PDF">Print/PDF</a>
         </div>
         <?php
     }

@@ -19,6 +19,15 @@ jQuery(document).ready(function ($) {
                 $("#email-html-preview").attr("srcdoc", res.message);
                 $("#email-raw").show();
                 $("#email-html-preview").hide();
+
+                // Show error message if email failed
+                if (res.result === 0 && res.error_message) {
+                    $("#log-error-message").text(res.error_message);
+                    $("#log-error-row").show();
+                } else {
+                    $("#log-error-row").hide();
+                }
+
                 $("#email-log-modal-overlay").css('display', 'flex').hide().fadeIn(200);
             } else {
                 alert(response.data || "Failed to load email log.");
@@ -51,6 +60,37 @@ jQuery(document).ready(function ($) {
             } else {
                 alert(response.data || "Failed to delete log.");
             }
+        });
+    });
+
+    // Resend email
+    $(document).on("click", ".resend-email", function (e) {
+        e.preventDefault();
+
+        if (!confirm("Are you sure you want to resend this email?")) {
+            return;
+        }
+
+        const $link = $(this);
+        const id = $link.data("id");
+
+        $link.text("Sending...");
+
+        $.post(wzpAjax.ajax_url, {
+            action: "wzp_resend_email",
+            id: id,
+            nonce: wzpAjax.nonce
+        }, function (response) {
+            if (response.success) {
+                alert(response.data);
+                location.reload();
+            } else {
+                alert(response.data || "Failed to resend email.");
+                $link.text("Resend");
+            }
+        }).fail(function () {
+            alert("Request failed. Please try again.");
+            $link.text("Resend");
         });
     });
 
