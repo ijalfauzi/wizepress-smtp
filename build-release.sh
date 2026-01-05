@@ -29,6 +29,7 @@ rsync -av --progress . "$RELEASE_DIR" \
     --exclude='*.sh' \
     --exclude='WORDPRESS-ORG-SUBMISSION.md' \
     --exclude='RELEASE-INSTRUCTIONS.md' \
+    --exclude='UPDATE-WORKFLOW.md' \
     --exclude='.claude' \
     --exclude='*.zip'
 
