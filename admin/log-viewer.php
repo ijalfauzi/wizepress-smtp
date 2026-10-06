@@ -1,49 +1,57 @@
 <?php
+/**
+ * Email logs page and exports.
+ *
+ * @package Modifus_SMTP
+ */
+
+defined('ABSPATH') || exit;
+
 // Handle exports before headers are sent
-add_action('admin_init', 'wzp_handle_export');
-function wzp_handle_export() {
-    if (!isset($_GET['page']) || $_GET['page'] !== 'wzp-smtp') {
+add_action('admin_init', 'modifus_smtp_handle_export');
+function modifus_smtp_handle_export() {
+    if (!isset($_GET['page']) || $_GET['page'] !== 'modifus-smtp') {
         return;
     }
-    
+
     $action = isset($_GET['action']) ? sanitize_key($_GET['action']) : '';
-    
+
     if (in_array($action, ['export_csv', 'export_excel', 'export_print'], true)) {
-        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'wzp_export')) {
-            wp_die('Invalid security token.');
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'modifus_smtp_export')) {
+            wp_die(esc_html__('Invalid security token.', 'modifus-smtp'));
         }
 
         if (!current_user_can('manage_options')) {
-            wp_die('Unauthorized.');
+            wp_die(esc_html__('Unauthorized.', 'modifus-smtp'));
         }
-        
-        $logs = wzp_get_export_logs();
-        $filename = wzp_get_export_filename();
-        
+
+        $logs = modifus_smtp_get_export_logs();
+        $filename = modifus_smtp_get_export_filename();
+
         switch ($action) {
             case 'export_csv':
-                wzp_export_csv($logs, $filename);
+                modifus_smtp_export_csv($logs, $filename);
                 break;
             case 'export_excel':
-                wzp_export_excel($logs, $filename);
+                modifus_smtp_export_xlsx($logs, $filename);
                 break;
             case 'export_print':
-                wzp_export_print($logs);
+                modifus_smtp_export_print($logs);
                 break;
         }
     }
 }
 
-function wzp_email_logs_page() {
-    $logs_table = new WZP_Email_Logs_Table();
+function modifus_smtp_logs_page() {
+    $logs_table = new Modifus_SMTP_Logs_Table();
     $logs_table->prepare_items();
     ?>
-    <div class="wzp-email-logs-wrap">
+    <div class="modifus-smtp-email-logs-wrap">
         <form method="get">
-            <input type="hidden" name="page" value="wzp-smtp" />
+            <input type="hidden" name="page" value="modifus-smtp" />
             <input type="hidden" name="tab" value="logs" />
             <?php
-            $logs_table->search_box('Search Emails', 'wzp-search');
+            $logs_table->search_box(__('Search Emails', 'modifus-smtp'), 'modifus-smtp-search');
             $logs_table->display();
             ?>
         </form>
@@ -51,18 +59,18 @@ function wzp_email_logs_page() {
 
     <div id="email-log-modal-overlay">
         <div id="email-log-modal">
-            <button id="email-log-modal-close" aria-label="Close Modal">&times;</button>
-            <h2>Email Content</h2>
+            <button id="email-log-modal-close" aria-label="<?php esc_attr_e('Close Modal', 'modifus-smtp'); ?>">&times;</button>
+            <h2><?php esc_html_e('Email Content', 'modifus-smtp'); ?></h2>
             <table class="widefat striped">
-                <tr><th>Sent at</th><td id="log-sent-at"></td></tr>
-                <tr><th>To</th><td id="log-to"></td></tr>
-                <tr><th>Subject</th><td id="log-subject"></td></tr>
-                <tr id="log-error-row" style="display:none;"><th>Error</th><td id="log-error-message" class="wzp-error-text"></td></tr>
+                <tr><th><?php esc_html_e('Sent at', 'modifus-smtp'); ?></th><td id="log-sent-at"></td></tr>
+                <tr><th><?php esc_html_e('To', 'modifus-smtp'); ?></th><td id="log-to"></td></tr>
+                <tr><th><?php esc_html_e('Subject', 'modifus-smtp'); ?></th><td id="log-subject"></td></tr>
+                <tr id="log-error-row" style="display:none;"><th><?php esc_html_e('Error', 'modifus-smtp'); ?></th><td id="log-error-message" class="modifus-smtp-error-text"></td></tr>
             </table>
 
             <div class="modal-toolbar">
-                <button class="button" id="toggle-raw">Raw Email Content</button>
-                <button class="button" id="toggle-html">Preview Content as HTML</button>
+                <button class="button" id="toggle-raw"><?php esc_html_e('Raw Email Content', 'modifus-smtp'); ?></button>
+                <button class="button" id="toggle-html"><?php esc_html_e('Preview Content as HTML', 'modifus-smtp'); ?></button>
             </div>
 
             <textarea id="email-raw" readonly></textarea>
@@ -75,38 +83,10 @@ function wzp_email_logs_page() {
 /**
  * Get logs for export with current filters
  */
-function wzp_get_export_logs() {
+function modifus_smtp_get_export_logs() {
     global $wpdb;
-    $table = WZP_SMTP_TABLE;
-
-    $where = '1=1';
-    $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
-
-    if (!empty($search)) {
-        $search_like = '%' . $wpdb->esc_like($search) . '%';
-        $where .= $wpdb->prepare(
-            " AND (to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)",
-            $search_like,
-            $search_like,
-            $search_like
-        );
-    }
-
-    $status_filter = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-    if ($status_filter === 'success') {
-        $where .= ' AND result = 1';
-    } elseif ($status_filter === 'failed') {
-        $where .= ' AND result = 0';
-    }
-
-    $date_filter = isset($_GET['m']) ? sanitize_text_field($_GET['m']) : '';
-    if (!empty($date_filter) && preg_match('/^(\d{4})(\d{2})$/', $date_filter, $matches)) {
-        $where .= $wpdb->prepare(
-            " AND YEAR(sent_at) = %d AND MONTH(sent_at) = %d",
-            $matches[1],
-            $matches[2]
-        );
-    }
+    $table = modifus_smtp_table();
+    $where = modifus_smtp_logs_where($_GET);
 
     return $wpdb->get_results(
         "SELECT * FROM $table WHERE $where ORDER BY sent_at ASC, id ASC",
@@ -117,47 +97,70 @@ function wzp_get_export_logs() {
 /**
  * Generate descriptive filename for exports
  */
-function wzp_get_export_filename() {
+function modifus_smtp_get_export_filename() {
     $parts = ['email-logs'];
-    
-    $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
-    if (!empty($status)) {
+
+    $status = isset($_GET['status']) ? sanitize_key($_GET['status']) : '';
+    if (in_array($status, ['success', 'failed'], true)) {
         $parts[] = $status;
     }
-    
+
     $date = isset($_GET['m']) ? sanitize_text_field($_GET['m']) : '';
     if (!empty($date) && preg_match('/^(\d{4})(\d{2})$/', $date, $m)) {
         $parts[] = $m[1] . '-' . $m[2];
     }
-    
-    $parts[] = date('Y-m-d');
-    
+
+    $parts[] = wp_date('Y-m-d');
+
     return implode('-', $parts);
+}
+
+/**
+ * Export column headings
+ */
+function modifus_smtp_export_headings() {
+    return [
+        __('ID', 'modifus-smtp'),
+        __('Sent At', 'modifus-smtp'),
+        __('Status', 'modifus-smtp'),
+        __('To', 'modifus-smtp'),
+        __('Subject', 'modifus-smtp'),
+        __('Attachments', 'modifus-smtp'),
+        __('IP Address', 'modifus-smtp'),
+        __('Error Message', 'modifus-smtp'),
+    ];
 }
 
 /**
  * Format log row for export
  */
-function wzp_format_log_row($log) {
-    $to = is_serialized($log['to_email']) ? maybe_unserialize($log['to_email']) : $log['to_email'];
-    $to = is_array($to) ? implode(', ', $to) : $to;
-    
+function modifus_smtp_format_log_row($log) {
     return [
-        'id'         => $log['id'],
+        'id'         => (int) $log['id'],
         'sent_at'    => $log['sent_at'],
-        'status'     => $log['result'] ? 'Success' : 'Failed',
-        'to'         => $to,
+        'status'     => $log['result'] ? __('Success', 'modifus-smtp') : __('Failed', 'modifus-smtp'),
+        'to'         => modifus_smtp_log_recipients($log['to_email']),
         'subject'    => $log['subject'] ?? '',
-        'attachments'=> $log['attachments'] ?? 0,
+        'attachments'=> (int) ($log['attachments'] ?? 0),
         'ip_address' => $log['ip_address'] ?? '',
         'error'      => $log['error_message'] ?? ''
     ];
 }
 
 /**
+ * Stop spreadsheet apps treating a text cell as a formula (CSV injection).
+ */
+function modifus_smtp_csv_safe($value) {
+    if (is_string($value) && $value !== '' && in_array($value[0], ['=', '+', '-', '@', "\t", "\r"], true)) {
+        return "'" . $value;
+    }
+    return $value;
+}
+
+/**
  * Export as CSV
  */
-function wzp_export_csv($logs, $filename) {
+function modifus_smtp_export_csv($logs, $filename) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
     header('Pragma: no-cache');
@@ -166,10 +169,10 @@ function wzp_export_csv($logs, $filename) {
     $output = fopen('php://output', 'w');
     fprintf($output, chr(0xEF).chr(0xBB).chr(0xBF));
 
-    fputcsv($output, ['ID', 'Sent At', 'Status', 'To', 'Subject', 'Attachments', 'IP Address', 'Error Message'], ',', '"', '\\');
+    fputcsv($output, modifus_smtp_export_headings(), ',', '"', '\\');
 
     foreach ($logs as $log) {
-        $row = wzp_format_log_row($log);
+        $row = array_map('modifus_smtp_csv_safe', modifus_smtp_format_log_row($log));
         fputcsv($output, array_values($row), ',', '"', '\\');
     }
 
@@ -178,45 +181,105 @@ function wzp_export_csv($logs, $filename) {
 }
 
 /**
- * Export as Excel (HTML table format)
+ * Escape a value for an XML text node, dropping characters XML can't hold.
  */
-function wzp_export_excel($logs, $filename) {
-    header('Content-Type: application/vnd.ms-excel; charset=utf-8');
-    header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
-    header('Pragma: no-cache');
-    header('Expires: 0');
+function modifus_smtp_xml($value) {
+    $value = preg_replace('/[^\x{9}\x{A}\x{D}\x{20}-\x{D7FF}\x{E000}-\x{FFFD}\x{10000}-\x{10FFFF}]/u', '', (string) $value);
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+}
 
-    echo '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">';
-    echo '<head><meta charset="UTF-8"></head>';
-    echo '<body><table border="1">';
-    echo '<tr><th>ID</th><th>Sent At</th><th>Status</th><th>To</th><th>Subject</th><th>Attachments</th><th>IP Address</th><th>Error Message</th></tr>';
-
-    foreach ($logs as $log) {
-        $row = wzp_format_log_row($log);
-        echo '<tr>';
-        foreach ($row as $cell) {
-            echo '<td>' . esc_html($cell) . '</td>';
+/**
+ * Build one worksheet row. Text is written as inline strings, so it is
+ * never evaluated as a formula.
+ */
+function modifus_smtp_xlsx_row($cells, $row_number) {
+    $xml = '<row r="' . $row_number . '">';
+    foreach (array_values($cells) as $i => $value) {
+        $ref = chr(65 + $i) . $row_number;
+        if (is_int($value)) {
+            $xml .= '<c r="' . $ref . '"><v>' . $value . '</v></c>';
+        } else {
+            $xml .= '<c r="' . $ref . '" t="inlineStr"><is><t xml:space="preserve">' . modifus_smtp_xml($value) . '</t></is></c>';
         }
-        echo '</tr>';
+    }
+    return $xml . '</row>';
+}
+
+/**
+ * Export as Excel (.xlsx). Falls back to CSV if ZipArchive is unavailable.
+ */
+function modifus_smtp_export_xlsx($logs, $filename) {
+    if (!class_exists('ZipArchive')) {
+        modifus_smtp_export_csv($logs, $filename);
     }
 
-    echo '</table></body></html>';
+    $rows = modifus_smtp_xlsx_row(modifus_smtp_export_headings(), 1);
+    $n = 2;
+    foreach ($logs as $log) {
+        $rows .= modifus_smtp_xlsx_row(modifus_smtp_format_log_row($log), $n++);
+    }
+
+    $files = [
+        '[Content_Types].xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'
+            . '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'
+            . '<Default Extension="xml" ContentType="application/xml"/>'
+            . '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'
+            . '<Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>'
+            . '</Types>',
+        '_rels/.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'
+            . '</Relationships>',
+        'xl/workbook.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">'
+            . '<sheets><sheet name="Email Logs" sheetId="1" r:id="rId1"/></sheets>'
+            . '</workbook>',
+        'xl/_rels/workbook.xml.rels' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'
+            . '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>'
+            . '</Relationships>',
+        'xl/worksheets/sheet1.xml' => '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
+            . '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'
+            . '<sheetData>' . $rows . '</sheetData>'
+            . '</worksheet>',
+    ];
+
+    $tmp = wp_tempnam('modifus-smtp-export.xlsx');
+    $zip = new ZipArchive();
+    if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
+        @unlink($tmp);
+        modifus_smtp_export_csv($logs, $filename);
+    }
+    foreach ($files as $name => $content) {
+        $zip->addFromString($name, $content);
+    }
+    $zip->close();
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="' . $filename . '.xlsx"');
+    header('Content-Length: ' . filesize($tmp));
+    header('Pragma: no-cache');
+    header('Expires: 0');
+    readfile($tmp);
+    @unlink($tmp);
     exit;
 }
 
 /**
  * Export as Print-friendly HTML page
  */
-function wzp_export_print($logs) {
+function modifus_smtp_export_print($logs) {
     $site_name = get_bloginfo('name');
-    $export_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'));
+    $export_date = wp_date(get_option('date_format') . ' ' . get_option('time_format'));
     $total_logs = count($logs);
+    $headings = modifus_smtp_export_headings();
     ?>
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Email Logs - <?php echo esc_html($site_name); ?></title>
+    <title><?php echo esc_html(__('Email Logs', 'modifus-smtp') . ' - ' . $site_name); ?></title>
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; color: #1d2327; }
         h1 { font-size: 24px; margin-bottom: 5px; }
@@ -235,32 +298,30 @@ function wzp_export_print($logs) {
 </head>
 <body>
     <div class="no-print" style="margin-bottom:20px;">
-        <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer;">🖨️ Print / Save as PDF</button>
-        <button onclick="window.close()" style="padding:8px 16px;font-size:14px;cursor:pointer;margin-left:10px;">Close</button>
+        <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer;">🖨️ <?php esc_html_e('Print / Save as PDF', 'modifus-smtp'); ?></button>
+        <button onclick="window.close()" style="padding:8px 16px;font-size:14px;cursor:pointer;margin-left:10px;"><?php esc_html_e('Close', 'modifus-smtp'); ?></button>
     </div>
-    <h1>Email Logs</h1>
-    <p class="meta"><?php echo esc_html($site_name); ?> • Exported on <?php echo esc_html($export_date); ?> • <?php echo $total_logs; ?> records</p>
+    <h1><?php esc_html_e('Email Logs', 'modifus-smtp'); ?></h1>
+    <p class="meta"><?php
+        /* translators: 1: site name, 2: export date, 3: number of records */
+        echo esc_html(sprintf(__('%1$s • Exported on %2$s • %3$d records', 'modifus-smtp'), $site_name, $export_date, $total_logs));
+    ?></p>
     <table>
         <thead>
             <tr>
-                <th>ID</th>
-                <th>Sent At</th>
-                <th>Status</th>
-                <th>To</th>
-                <th>Subject</th>
-                <th>Attachments</th>
-                <th>IP Address</th>
-                <th>Error</th>
+                <?php foreach ($headings as $heading) : ?>
+                    <th><?php echo esc_html($heading); ?></th>
+                <?php endforeach; ?>
             </tr>
         </thead>
         <tbody>
-            <?php foreach ($logs as $log) : 
-                $row = wzp_format_log_row($log);
+            <?php foreach ($logs as $log) :
+                $row = modifus_smtp_format_log_row($log);
             ?>
             <tr>
                 <td><?php echo esc_html($row['id']); ?></td>
                 <td><?php echo esc_html($row['sent_at']); ?></td>
-                <td class="status-<?php echo $row['status'] === 'Success' ? 'success' : 'failed'; ?>"><?php echo esc_html($row['status']); ?></td>
+                <td class="status-<?php echo $log['result'] ? 'success' : 'failed'; ?>"><?php echo esc_html($row['status']); ?></td>
                 <td><?php echo esc_html($row['to']); ?></td>
                 <td><?php echo esc_html($row['subject']); ?></td>
                 <td><?php echo esc_html($row['attachments']); ?></td>

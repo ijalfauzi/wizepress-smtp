@@ -3,7 +3,7 @@ if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class WZP_Email_Logs_Table extends WP_List_Table {
+class Modifus_SMTP_Logs_Table extends WP_List_Table {
 
     public function __construct() {
         parent::__construct([
@@ -19,12 +19,12 @@ class WZP_Email_Logs_Table extends WP_List_Table {
     public function get_columns() {
         return [
             'cb'          => '<input type="checkbox" />',
-            'sent_at'     => 'Sent At',
-            'result'      => 'Status',
-            'to_email'    => 'To',
-            'subject'     => 'Subject',
-            'attachments' => 'Attachments',
-            'ip_address'  => 'IP Address'
+            'sent_at'     => __('Sent At', 'modifus-smtp'),
+            'result'      => __('Status', 'modifus-smtp'),
+            'to_email'    => __('To', 'modifus-smtp'),
+            'subject'     => __('Subject', 'modifus-smtp'),
+            'attachments' => __('Attachments', 'modifus-smtp'),
+            'ip_address'  => __('IP Address', 'modifus-smtp')
         ];
     }
 
@@ -45,7 +45,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
      */
     public function get_bulk_actions() {
         return [
-            'delete' => 'Delete'
+            'delete' => __('Delete', 'modifus-smtp')
         ];
     }
 
@@ -60,30 +60,33 @@ class WZP_Email_Logs_Table extends WP_List_Table {
      * Sent At column with row actions
      */
     public function column_sent_at($item) {
-        $timestamp = strtotime(get_date_from_gmt($item->sent_at));
-        $date_display = date_i18n('j F Y', $timestamp);
-        $time_display = date_i18n('g:i:s a', $timestamp);
+        // sent_at is stored in site local time
+        $date_display = modifus_smtp_format_date($item->sent_at, get_option('date_format'));
+        $time_display = modifus_smtp_format_date($item->sent_at, get_option('time_format'));
 
-        $delete_nonce = wp_create_nonce('wzp_delete_log_' . $item->id);
+        $delete_nonce = wp_create_nonce('modifus_smtp_delete_log_' . $item->id);
 
         $actions = [
             'view'   => sprintf(
-                '<a href="#" class="view-email" data-id="%d">View Content</a>',
-                $item->id
+                '<a href="#" class="view-email" data-id="%d">%s</a>',
+                $item->id,
+                esc_html__('View Content', 'modifus-smtp')
             ),
             'resend' => sprintf(
-                '<a href="#" class="resend-email" data-id="%d">Resend</a>',
-                $item->id
+                '<a href="#" class="resend-email" data-id="%d">%s</a>',
+                $item->id,
+                esc_html__('Resend', 'modifus-smtp')
             ),
             'delete' => sprintf(
-                '<a href="#" class="delete-email" data-id="%d" data-nonce="%s">Delete</a>',
+                '<a href="#" class="delete-email" data-id="%d" data-nonce="%s">%s</a>',
                 $item->id,
-                $delete_nonce
+                $delete_nonce,
+                esc_html__('Delete', 'modifus-smtp')
             )
         ];
 
         return sprintf(
-            '%s<br><span class="wzp-time">@ %s</span><br><span class="wzp-id">(id:%d)</span>%s',
+            '%s<br><span class="modifus-smtp-time">@ %s</span><br><span class="modifus-smtp-id">(id:%d)</span>%s',
             esc_html($date_display),
             esc_html($time_display),
             $item->id,
@@ -95,16 +98,16 @@ class WZP_Email_Logs_Table extends WP_List_Table {
      * Result/Status column
      */
     public function column_result($item) {
-        $class = $item->result ? 'wzp-status-success' : 'wzp-status-failed';
-        return sprintf('<span class="wzp-status-icon %s"></span>', $class);
+        $class = $item->result ? 'modifus-smtp-status-success' : 'modifus-smtp-status-failed';
+        $label = $item->result ? __('Success', 'modifus-smtp') : __('Failed', 'modifus-smtp');
+        return sprintf('<span class="modifus-smtp-status-icon %s" title="%s"></span><span class="screen-reader-text">%s</span>', $class, esc_attr($label), esc_html($label));
     }
 
     /**
      * To Email column
      */
     public function column_to_email($item) {
-        $to = is_serialized($item->to_email) ? maybe_unserialize($item->to_email) : $item->to_email;
-        return esc_html(is_array($to) ? implode(', ', $to) : $to);
+        return esc_html(modifus_smtp_log_recipients($item->to_email));
     }
 
     /**
@@ -146,7 +149,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
      * Message when no items found
      */
     public function no_items() {
-        echo 'No email logs found.';
+        esc_html_e('No email logs found.', 'modifus-smtp');
     }
 
     /**
@@ -155,8 +158,8 @@ class WZP_Email_Logs_Table extends WP_List_Table {
     public function prepare_items() {
         global $wpdb;
 
-        $table = WZP_SMTP_TABLE;
-        $per_page = $this->get_items_per_page('wzp_logs_per_page', 20);
+        $table = modifus_smtp_table();
+        $per_page = $this->get_items_per_page('modifus_smtp_logs_per_page', 20);
         $current_page = $this->get_pagenum();
         $offset = ($current_page - 1) * $per_page;
 
@@ -171,38 +174,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
         $this->process_bulk_action();
 
         // Build query
-        $where = '1=1';
-        $search = isset($_REQUEST['s']) ? sanitize_text_field($_REQUEST['s']) : '';
-
-        if (!empty($search)) {
-            $search_like = '%' . $wpdb->esc_like($search) . '%';
-            $where .= $wpdb->prepare(
-                " AND (to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)",
-                $search_like,
-                $search_like,
-                $search_like
-            );
-        }
-
-        // Filter by status
-        $status_filter = isset($_REQUEST['status']) ? sanitize_text_field($_REQUEST['status']) : '';
-        if ($status_filter === 'success') {
-            $where .= ' AND result = 1';
-        } elseif ($status_filter === 'failed') {
-            $where .= ' AND result = 0';
-        }
-
-        // Filter by date (month)
-        $date_filter = isset($_REQUEST['m']) ? sanitize_text_field($_REQUEST['m']) : '';
-        if (!empty($date_filter) && preg_match('/^(\d{4})(\d{2})$/', $date_filter, $matches)) {
-            $year = $matches[1];
-            $month = $matches[2];
-            $where .= $wpdb->prepare(
-                " AND YEAR(sent_at) = %d AND MONTH(sent_at) = %d",
-                $year,
-                $month
-            );
-        }
+        $where = modifus_smtp_logs_where($_REQUEST);
 
         // Sorting
         $orderby = isset($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'sent_at';
@@ -255,7 +227,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
                 $ids_placeholder = implode(',', array_fill(0, count($log_ids), '%d'));
                 $wpdb->query(
                     $wpdb->prepare(
-                        "DELETE FROM " . WZP_SMTP_TABLE . " WHERE id IN ($ids_placeholder)",
+                        "DELETE FROM " . modifus_smtp_table() . " WHERE id IN ($ids_placeholder)",
                         ...$log_ids
                     )
                 );
@@ -271,41 +243,41 @@ class WZP_Email_Logs_Table extends WP_List_Table {
             return;
         }
 
-        $status = isset($_REQUEST['status']) ? sanitize_text_field($_REQUEST['status']) : '';
-        $search = isset($_REQUEST['s']) ? sanitize_text_field($_REQUEST['s']) : '';
+        $status = isset($_REQUEST['status']) ? sanitize_key($_REQUEST['status']) : '';
+        $search = isset($_REQUEST['s']) ? sanitize_text_field(wp_unslash($_REQUEST['s'])) : '';
         $date = isset($_REQUEST['m']) ? sanitize_text_field($_REQUEST['m']) : '';
         $has_filter = !empty($status) || !empty($search) || !empty($date);
         ?>
         <div class="alignleft actions">
             <?php $this->render_months_dropdown(); ?>
             <select name="status">
-                <option value="">All Statuses</option>
-                <option value="success" <?php selected($status, 'success'); ?>>Success</option>
-                <option value="failed" <?php selected($status, 'failed'); ?>>Failed</option>
+                <option value=""><?php esc_html_e('All Statuses', 'modifus-smtp'); ?></option>
+                <option value="success" <?php selected($status, 'success'); ?>><?php esc_html_e('Success', 'modifus-smtp'); ?></option>
+                <option value="failed" <?php selected($status, 'failed'); ?>><?php esc_html_e('Failed', 'modifus-smtp'); ?></option>
             </select>
-            <?php submit_button('Filter', '', 'filter_action', false); ?>
+            <?php submit_button(__('Filter', 'modifus-smtp'), '', 'filter_action', false); ?>
             <?php if ($has_filter) : ?>
-                <a href="<?php echo esc_url(admin_url('options-general.php?page=wzp-smtp&tab=logs')); ?>" class="button">Clear</a>
+                <a href="<?php echo esc_url(admin_url('options-general.php?page=modifus-smtp&tab=logs')); ?>" class="button"><?php esc_html_e('Clear', 'modifus-smtp'); ?></a>
             <?php endif; ?>
         </div>
-        <div class="alignleft actions wzp-export-actions">
+        <div class="alignleft actions modifus-smtp-export-actions">
             <?php
             $base_params = [
-                'page'   => 'wzp-smtp',
+                'page'   => 'modifus-smtp',
                 'tab'    => 'logs',
                 's'      => $search,
                 'status' => $status,
                 'm'      => $date,
-                '_wpnonce' => wp_create_nonce('wzp_export')
+                '_wpnonce' => wp_create_nonce('modifus_smtp_export')
             ];
 
             $export_csv_url = add_query_arg(array_merge($base_params, ['action' => 'export_csv']), admin_url('options-general.php'));
             $export_excel_url = add_query_arg(array_merge($base_params, ['action' => 'export_excel']), admin_url('options-general.php'));
             $export_print_url = add_query_arg(array_merge($base_params, ['action' => 'export_print']), admin_url('options-general.php'));
             ?>
-            <a href="<?php echo esc_url($export_csv_url); ?>" class="button" title="Download as CSV">CSV</a>
-            <a href="<?php echo esc_url($export_excel_url); ?>" class="button" title="Download as Excel">Excel</a>
-            <a href="<?php echo esc_url($export_print_url); ?>" class="button" target="_blank" title="Print or Save as PDF">Print/PDF</a>
+            <a href="<?php echo esc_url($export_csv_url); ?>" class="button" title="<?php esc_attr_e('Download as CSV', 'modifus-smtp'); ?>">CSV</a>
+            <a href="<?php echo esc_url($export_excel_url); ?>" class="button" title="<?php esc_attr_e('Download as Excel', 'modifus-smtp'); ?>">Excel</a>
+            <a href="<?php echo esc_url($export_print_url); ?>" class="button" target="_blank" title="<?php esc_attr_e('Print or Save as PDF', 'modifus-smtp'); ?>"><?php esc_html_e('Print/PDF', 'modifus-smtp'); ?></a>
         </div>
         <?php
     }
@@ -318,8 +290,8 @@ class WZP_Email_Logs_Table extends WP_List_Table {
 
         $months = $wpdb->get_results(
             "SELECT DISTINCT YEAR(sent_at) AS year, MONTH(sent_at) AS month
-             FROM " . WZP_SMTP_TABLE . "
-             ORDER BY sent_at DESC"
+             FROM " . modifus_smtp_table() . "
+             ORDER BY year DESC, month DESC"
         );
 
         if (empty($months)) {
@@ -329,7 +301,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
         $selected = isset($_REQUEST['m']) ? sanitize_text_field($_REQUEST['m']) : '';
         ?>
         <select name="m">
-            <option value="">All Dates</option>
+            <option value=""><?php esc_html_e('All Dates', 'modifus-smtp'); ?></option>
             <?php foreach ($months as $row) : ?>
                 <?php
                 $month_value = sprintf('%04d%02d', $row->year, $row->month);

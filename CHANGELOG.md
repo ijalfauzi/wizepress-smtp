@@ -2,6 +2,41 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-10-06
+
+### Changed
+- **Renamed from WizePress SMTP to Modifus SMTP.** New plugin folder and main file (`modifus-smtp/modifus-smtp.php`), text domain `modifus-smtp`, admin page `Settings > Modifus SMTP`.
+- Author is now Modifus (https://modifus.com).
+- Internal prefixes renamed from `wzp_` / `WZP_` to `modifus_smtp_` / `MODIFUS_SMTP_`.
+- Settings option renamed to `modifus_smtp_settings` and log table to `{prefix}modifus_smtp_logs`.
+- SMTP is used whenever a host is set; login is now a separate setting.
+- Test and resent emails are logged like any other email, with the real subject and error.
+- Excel export is now a real `.xlsx` file (falls back to CSV without the PHP Zip extension).
+- Defaults for new installs: port 587 with TLS.
+
+### Added
+- Automatic migration from WizePress SMTP: settings, email logs and the logs-per-page screen option are moved over once WizePress SMTP is deactivated. An admin notice asks to deactivate it while both are active.
+- SMTP without authentication (open relays, local mail servers).
+- From Email, From Name and Force From settings. When Force From is off, only WordPress's default `wordpress@` sender is replaced.
+- SMTP password stored encrypted (AES-256 with the site's secret keys), or set with the `MODIFUS_SMTP_PASSWORD` constant in wp-config.php.
+- Log retention setting with a daily cleanup.
+- Personal data exporter and eraser for email logs, and suggested privacy policy text.
+- Resend re-attaches files that still exist.
+- Translation support with `languages/modifus-smtp.pot`.
+- `readme.txt` for WordPress.org.
+- Index on `sent_at` in the log table.
+
+### Fixed
+- Failed emails were logged with no recipient, subject or body (the logger called `WP_Error::get_data()`, which doesn't exist) and then borrowed the subject and body of the last successful email.
+- Log times were shifted by the site's timezone offset twice.
+- The saved SMTP password was printed into the settings page HTML.
+- The logged From address was empty unless a plugin set a From header; it now records the address actually used.
+- CSV export could carry spreadsheet formulas (CSV injection).
+- Month filter couldn't use an index; it now filters by date range.
+- An empty port saved as 0.
+- Uninstall only cleaned up the current site on multisite.
+- Log table schema now upgrades on in-place plugin updates. Previously `CREATE TABLE IF NOT EXISTS` stopped `dbDelta()` from adding new columns, and the activation hook doesn't run on updates, so sites installed before v1.1.0 could silently stop logging.
+
 ## [1.3.0] - 2026-01-02
 
 ### Added

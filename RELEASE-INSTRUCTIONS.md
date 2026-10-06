@@ -2,9 +2,9 @@
 
 ## Creating a Proper Release
 
-When creating a GitHub release, WordPress expects the plugin folder to be named `wizepress-smtp` (without version suffix).
+When creating a GitHub release, WordPress expects the plugin folder to be named `modifus-smtp` (without version suffix).
 
-GitHub's auto-generated source code archives create folders named `wizepress-smtp-1.2.0` which causes issues when users extract the ZIP directly to their plugins folder.
+GitHub's auto-generated source code archives create folders named `modifus-smtp-2.0.0` which causes issues when users extract the ZIP directly to their plugins folder.
 
 ### Solution: Use Build Script
 
@@ -14,7 +14,7 @@ Run the build script to create a properly formatted release ZIP:
 ./build-release.sh
 ```
 
-This creates: `wizepress-smtp-1.2.0.zip` containing a folder named `wizepress-smtp/`
+This creates: `modifus-smtp-2.0.0.zip` containing a folder named `modifus-smtp/`
 
 ### Upload to GitHub Release
 
@@ -22,15 +22,15 @@ After creating a tag and release on GitHub:
 
 ```bash
 # Create and push tag
-git tag -a v1.2.0 -m "Version 1.2.0"
-git push origin v1.2.0
+git tag -a v2.0.0 -m "Version 2.0.0"
+git push origin v2.0.0
 
 # Build release ZIP
 ./build-release.sh
 
 # Upload to GitHub release
-gh release create v1.2.0 --title "v1.2.0" --notes "Release notes here"
-gh release upload v1.2.0 wizepress-smtp-1.2.0.zip
+gh release create v2.0.0 --title "v2.0.0" --notes "Release notes here"
+gh release upload v2.0.0 modifus-smtp-2.0.0.zip
 ```
 
 ### What Gets Excluded
@@ -48,9 +48,9 @@ The build script excludes:
 ### For Users
 
 Users downloading from GitHub should:
-1. Download the attached `wizepress-smtp-1.2.0.zip` (not the source code archives)
+1. Download the attached `modifus-smtp-2.0.0.zip` (not the source code archives)
 2. Extract to `wp-content/plugins/`
-3. The folder will be correctly named `wizepress-smtp`
+3. The folder will be correctly named `modifus-smtp`
 
 ### GitHub Actions (Optional Future Enhancement)
 
@@ -74,7 +74,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ github.event.release.upload_url }}
-          asset_path: ./wizepress-smtp-${{ github.event.release.tag_name }}.zip
-          asset_name: wizepress-smtp-${{ github.event.release.tag_name }}.zip
+          asset_path: ./modifus-smtp-${{ github.event.release.tag_name }}.zip
+          asset_name: modifus-smtp-${{ github.event.release.tag_name }}.zip
           asset_content_type: application/zip
 ```
