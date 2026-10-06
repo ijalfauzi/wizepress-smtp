@@ -53,7 +53,8 @@ function modifus_smtp_insert_log($mail, $success = true, $error = null) {
     $subject         = $mail['subject'] ?? '';
     $message         = $mail['message'] ?? '';
 
-    $ip_address      = filter_var($_SERVER['REMOTE_ADDR'] ?? '', FILTER_VALIDATE_IP) ?: '';
+    $remote_addr     = isset($_SERVER['REMOTE_ADDR']) ? sanitize_text_field(wp_unslash($_SERVER['REMOTE_ADDR'])) : '';
+    $ip_address      = filter_var($remote_addr, FILTER_VALIDATE_IP) ?: '';
     $user_id         = get_current_user_id();
 
     if (!empty($modifus_smtp_current_mail['content_type'])) {
@@ -64,6 +65,7 @@ function modifus_smtp_insert_log($mail, $success = true, $error = null) {
             : 'text/plain';
     }
 
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery -- Plugin's own log table.
     $wpdb->insert(modifus_smtp_table(), [
         'to_email'        => $to_email,
         'from_email'      => sanitize_email($from_email),
@@ -134,10 +136,11 @@ add_action('wp_ajax_modifus_smtp_get_email_log', function () {
     }
 
     global $wpdb;
-    $id = intval($_GET['id'] ?? 0);
+    $id = isset($_GET['id']) ? absint(wp_unslash($_GET['id'])) : 0;
 
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
     $log = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM " . modifus_smtp_table() . " WHERE id = %d", $id),
+        $wpdb->prepare('SELECT * FROM %i WHERE id = %d', modifus_smtp_table(), $id),
         ARRAY_A
     );
 
@@ -162,8 +165,8 @@ add_action('wp_ajax_modifus_smtp_delete_email_log', function () {
         wp_send_json_error(__('Unauthorized.', 'modifus-smtp'));
     }
 
-    $id = intval($_POST['id'] ?? 0);
-    $nonce = sanitize_text_field($_POST['nonce'] ?? '');
+    $id    = isset($_POST['id']) ? absint(wp_unslash($_POST['id'])) : 0;
+    $nonce = isset($_POST['nonce']) ? sanitize_text_field(wp_unslash($_POST['nonce'])) : '';
 
     if (!wp_verify_nonce($nonce, 'modifus_smtp_delete_log_' . $id)) {
         wp_send_json_error(__('Invalid security token.', 'modifus-smtp'));
@@ -171,6 +174,7 @@ add_action('wp_ajax_modifus_smtp_delete_email_log', function () {
 
     global $wpdb;
 
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
     $result = $wpdb->delete(
         modifus_smtp_table(),
         ['id' => $id],
@@ -195,10 +199,11 @@ add_action('wp_ajax_modifus_smtp_resend_email', function () {
     }
 
     global $wpdb, $modifus_smtp_last_error;
-    $id = intval($_POST['id'] ?? 0);
+    $id = isset($_POST['id']) ? absint(wp_unslash($_POST['id'])) : 0;
 
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
     $log = $wpdb->get_row(
-        $wpdb->prepare("SELECT * FROM " . modifus_smtp_table() . " WHERE id = %d", $id),
+        $wpdb->prepare('SELECT * FROM %i WHERE id = %d', modifus_smtp_table(), $id),
         ARRAY_A
     );
 
@@ -262,47 +267,150 @@ function modifus_smtp_cleanup_logs() {
 
     // Delete in batches to avoid long table locks
     do {
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
         $deleted = $wpdb->query(
-            $wpdb->prepare("DELETE FROM " . modifus_smtp_table() . " WHERE sent_at < %s LIMIT 1000", $cutoff)
+            $wpdb->prepare('DELETE FROM %i WHERE sent_at < %s LIMIT 1000', modifus_smtp_table(), $cutoff)
         );
     } while ($deleted === 1000);
 }
 
 /**
- * Build the WHERE clause for the log list and exports from request filters.
+ * Log filters from the query string, shared by the log list and exports.
+ *
+ * They only narrow which logs are shown, so like core's list table filters
+ * they are read without a nonce. Exports check their own nonce first.
  */
-function modifus_smtp_logs_where($request) {
-    global $wpdb;
+function modifus_smtp_logs_filters() {
+    // phpcs:disable WordPress.Security.NonceVerification.Recommended
+    $search = isset($_GET['s']) ? sanitize_text_field(wp_unslash($_GET['s'])) : '';
+    $status = isset($_GET['status']) ? sanitize_key(wp_unslash($_GET['status'])) : '';
+    $month  = isset($_GET['m']) ? sanitize_text_field(wp_unslash($_GET['m'])) : '';
+    // phpcs:enable WordPress.Security.NonceVerification.Recommended
 
-    $where = '1=1';
-
-    $search = isset($request['s']) ? sanitize_text_field(wp_unslash($request['s'])) : '';
-    if ($search !== '') {
-        $search_like = '%' . $wpdb->esc_like($search) . '%';
-        $where .= $wpdb->prepare(
-            " AND (to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)",
-            $search_like,
-            $search_like,
-            $search_like
-        );
+    if (!in_array($status, ['success', 'failed'], true)) {
+        $status = '';
+    }
+    if (!preg_match('/^(\d{4})(\d{2})$/', $month, $matches) || (int) $matches[2] < 1 || (int) $matches[2] > 12) {
+        $month = '';
     }
 
-    $status = isset($request['status']) ? sanitize_key($request['status']) : '';
-    if ($status === 'success') {
-        $where .= ' AND result = 1';
-    } elseif ($status === 'failed') {
-        $where .= ' AND result = 0';
+    return ['search' => $search, 'status' => $status, 'month' => $month];
+}
+
+/**
+ * Values for the filter placeholders in the log queries:
+ *
+ *   (%s = '' OR to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)  like x4
+ *   AND (%d < 0 OR result = %d)                                             result x2
+ *   AND (%d = 0 OR (sent_at >= %s AND sent_at < %s))                        has_month, start, end
+ *
+ * A filter that isn't set turns its condition into a constant true, which
+ * MySQL drops, so the month range can still use the sent_at index.
+ */
+function modifus_smtp_logs_filter_args($filters) {
+    global $wpdb;
+
+    $like = $filters['search'] === '' ? '' : '%' . $wpdb->esc_like($filters['search']) . '%';
+
+    $result = -1;
+    if ($filters['status'] === 'success') {
+        $result = 1;
+    } elseif ($filters['status'] === 'failed') {
+        $result = 0;
     }
 
     // Month filter as a range so the sent_at index is used
-    $month = isset($request['m']) ? sanitize_text_field($request['m']) : '';
-    if (preg_match('/^(\d{4})(\d{2})$/', $month, $matches) && (int) $matches[2] >= 1 && (int) $matches[2] <= 12) {
-        $start = sprintf('%04d-%02d-01 00:00:00', $matches[1], $matches[2]);
-        $end   = (int) $matches[2] === 12
-            ? sprintf('%04d-01-01 00:00:00', $matches[1] + 1)
-            : sprintf('%04d-%02d-01 00:00:00', $matches[1], $matches[2] + 1);
-        $where .= $wpdb->prepare(' AND sent_at >= %s AND sent_at < %s', $start, $end);
+    $start = '1000-01-01 00:00:00';
+    $end   = '9999-12-31 23:59:59';
+    if ($filters['month'] !== '') {
+        $year  = (int) substr($filters['month'], 0, 4);
+        $month = (int) substr($filters['month'], 4, 2);
+        $start = sprintf('%04d-%02d-01 00:00:00', $year, $month);
+        $end   = $month === 12
+            ? sprintf('%04d-01-01 00:00:00', $year + 1)
+            : sprintf('%04d-%02d-01 00:00:00', $year, $month + 1);
     }
 
-    return $where;
+    return [
+        'like'      => $like,
+        'result'    => $result,
+        'has_month' => $filters['month'] !== '' ? 1 : 0,
+        'start'     => $start,
+        'end'       => $end,
+    ];
+}
+
+/**
+ * Number of logs matching the filters.
+ */
+function modifus_smtp_count_logs($filters) {
+    global $wpdb;
+
+    $f = modifus_smtp_logs_filter_args($filters);
+
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table; changes with every email sent.
+    return (int) $wpdb->get_var(
+        $wpdb->prepare(
+            "SELECT COUNT(*) FROM %i
+             WHERE (%s = '' OR to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)
+             AND (%d < 0 OR result = %d)
+             AND (%d = 0 OR (sent_at >= %s AND sent_at < %s))",
+            modifus_smtp_table(),
+            $f['like'], $f['like'], $f['like'], $f['like'],
+            $f['result'], $f['result'],
+            $f['has_month'], $f['start'], $f['end']
+        )
+    );
+}
+
+/**
+ * Logs matching the filters.
+ *
+ * @param array  $filters From modifus_smtp_logs_filters().
+ * @param string $orderby Column to sort by: sent_at, to_email, subject or result.
+ * @param string $order   ASC or DESC.
+ * @param int    $limit   Maximum number of logs.
+ * @param int    $offset  Number of logs to skip.
+ * @param string $output  OBJECT or ARRAY_A.
+ */
+function modifus_smtp_get_logs($filters, $orderby = 'sent_at', $order = 'DESC', $limit = PHP_INT_MAX, $offset = 0, $output = OBJECT) {
+    global $wpdb;
+
+    if (!in_array($orderby, ['sent_at', 'to_email', 'subject', 'result'], true)) {
+        $orderby = 'sent_at';
+    }
+
+    $table = modifus_smtp_table();
+    $f     = modifus_smtp_logs_filter_args($filters);
+
+    if ($order === 'ASC') {
+        $sql = $wpdb->prepare(
+            "SELECT * FROM %i
+             WHERE (%s = '' OR to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)
+             AND (%d < 0 OR result = %d)
+             AND (%d = 0 OR (sent_at >= %s AND sent_at < %s))
+             ORDER BY %i ASC, id ASC LIMIT %d OFFSET %d",
+            $table,
+            $f['like'], $f['like'], $f['like'], $f['like'],
+            $f['result'], $f['result'],
+            $f['has_month'], $f['start'], $f['end'],
+            $orderby, $limit, $offset
+        );
+    } else {
+        $sql = $wpdb->prepare(
+            "SELECT * FROM %i
+             WHERE (%s = '' OR to_email LIKE %s OR subject LIKE %s OR from_email LIKE %s)
+             AND (%d < 0 OR result = %d)
+             AND (%d = 0 OR (sent_at >= %s AND sent_at < %s))
+             ORDER BY %i DESC, id DESC LIMIT %d OFFSET %d",
+            $table,
+            $f['like'], $f['like'], $f['like'], $f['like'],
+            $f['result'], $f['result'],
+            $f['has_month'], $f['start'], $f['end'],
+            $orderby, $limit, $offset
+        );
+    }
+
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.NotPrepared -- Plugin's own log table; $sql is prepared just above.
+    return $wpdb->get_results($sql, $output);
 }

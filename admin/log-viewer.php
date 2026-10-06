@@ -14,10 +14,10 @@ function modifus_smtp_handle_export() {
         return;
     }
 
-    $action = isset($_GET['action']) ? sanitize_key($_GET['action']) : '';
+    $action = isset($_GET['action']) ? sanitize_key(wp_unslash($_GET['action'])) : '';
 
     if (in_array($action, ['export_csv', 'export_excel', 'export_print'], true)) {
-        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'modifus_smtp_export')) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_GET['_wpnonce'])), 'modifus_smtp_export')) {
             wp_die(esc_html__('Invalid security token.', 'modifus-smtp'));
         }
 
@@ -25,8 +25,9 @@ function modifus_smtp_handle_export() {
             wp_die(esc_html__('Unauthorized.', 'modifus-smtp'));
         }
 
-        $logs = modifus_smtp_get_export_logs();
-        $filename = modifus_smtp_get_export_filename();
+        $filters  = modifus_smtp_logs_filters();
+        $logs     = modifus_smtp_get_logs($filters, 'sent_at', 'ASC', PHP_INT_MAX, 0, ARRAY_A);
+        $filename = modifus_smtp_get_export_filename($filters);
 
         switch ($action) {
             case 'export_csv':
@@ -81,33 +82,17 @@ function modifus_smtp_logs_page() {
 }
 
 /**
- * Get logs for export with current filters
- */
-function modifus_smtp_get_export_logs() {
-    global $wpdb;
-    $table = modifus_smtp_table();
-    $where = modifus_smtp_logs_where($_GET);
-
-    return $wpdb->get_results(
-        "SELECT * FROM $table WHERE $where ORDER BY sent_at ASC, id ASC",
-        ARRAY_A
-    );
-}
-
-/**
  * Generate descriptive filename for exports
  */
-function modifus_smtp_get_export_filename() {
+function modifus_smtp_get_export_filename($filters) {
     $parts = ['email-logs'];
 
-    $status = isset($_GET['status']) ? sanitize_key($_GET['status']) : '';
-    if (in_array($status, ['success', 'failed'], true)) {
-        $parts[] = $status;
+    if ($filters['status'] !== '') {
+        $parts[] = $filters['status'];
     }
 
-    $date = isset($_GET['m']) ? sanitize_text_field($_GET['m']) : '';
-    if (!empty($date) && preg_match('/^(\d{4})(\d{2})$/', $date, $m)) {
-        $parts[] = $m[1] . '-' . $m[2];
+    if ($filters['month'] !== '') {
+        $parts[] = substr($filters['month'], 0, 4) . '-' . substr($filters['month'], 4, 2);
     }
 
     $parts[] = wp_date('Y-m-d');
@@ -176,7 +161,7 @@ function modifus_smtp_export_csv($logs, $filename) {
         fputcsv($output, array_values($row), ',', '"', '\\');
     }
 
-    fclose($output);
+    fclose($output); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_fclose -- php://output stream, not a file.
     exit;
 }
 
@@ -248,7 +233,7 @@ function modifus_smtp_export_xlsx($logs, $filename) {
     $tmp = wp_tempnam('modifus-smtp-export.xlsx');
     $zip = new ZipArchive();
     if ($zip->open($tmp, ZipArchive::OVERWRITE) !== true) {
-        @unlink($tmp);
+        wp_delete_file($tmp);
         modifus_smtp_export_csv($logs, $filename);
     }
     foreach ($files as $name => $content) {
@@ -261,8 +246,8 @@ function modifus_smtp_export_xlsx($logs, $filename) {
     header('Content-Length: ' . filesize($tmp));
     header('Pragma: no-cache');
     header('Expires: 0');
-    readfile($tmp);
-    @unlink($tmp);
+    readfile($tmp); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_readfile -- Streams the temporary export file to the browser.
+    wp_delete_file($tmp);
     exit;
 }
 
@@ -274,32 +259,22 @@ function modifus_smtp_export_print($logs) {
     $export_date = wp_date(get_option('date_format') . ' ' . get_option('time_format'));
     $total_logs = count($logs);
     $headings = modifus_smtp_export_headings();
+
+    $url = plugin_dir_url(MODIFUS_SMTP_FILE);
+    wp_register_style('modifus-smtp-print', $url . 'assets/css/print.css', [], MODIFUS_SMTP_VERSION);
+    wp_register_script('modifus-smtp-print', $url . 'assets/js/print.js', [], MODIFUS_SMTP_VERSION, true);
     ?>
 <!DOCTYPE html>
-<html>
+<html <?php language_attributes(); ?>>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="<?php bloginfo('charset'); ?>">
     <title><?php echo esc_html(__('Email Logs', 'modifus-smtp') . ' - ' . $site_name); ?></title>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; color: #1d2327; }
-        h1 { font-size: 24px; margin-bottom: 5px; }
-        .meta { color: #646970; font-size: 13px; margin-bottom: 20px; }
-        table { width: 100%; border-collapse: collapse; font-size: 12px; }
-        th, td { border: 1px solid #c3c4c7; padding: 8px; text-align: left; }
-        th { background: #f0f0f1; font-weight: 600; }
-        tr:nth-child(even) { background: #f9f9f9; }
-        .status-success { color: #00a32a; }
-        .status-failed { color: #d63638; }
-        @media print {
-            body { margin: 0; }
-            .no-print { display: none !important; }
-        }
-    </style>
+    <?php wp_print_styles('modifus-smtp-print'); ?>
 </head>
 <body>
-    <div class="no-print" style="margin-bottom:20px;">
-        <button onclick="window.print()" style="padding:8px 16px;font-size:14px;cursor:pointer;">🖨️ <?php esc_html_e('Print / Save as PDF', 'modifus-smtp'); ?></button>
-        <button onclick="window.close()" style="padding:8px 16px;font-size:14px;cursor:pointer;margin-left:10px;"><?php esc_html_e('Close', 'modifus-smtp'); ?></button>
+    <div class="no-print toolbar">
+        <button type="button" id="modifus-smtp-print">🖨️ <?php esc_html_e('Print / Save as PDF', 'modifus-smtp'); ?></button>
+        <button type="button" id="modifus-smtp-close"><?php esc_html_e('Close', 'modifus-smtp'); ?></button>
     </div>
     <h1><?php esc_html_e('Email Logs', 'modifus-smtp'); ?></h1>
     <p class="meta"><?php
@@ -331,6 +306,7 @@ function modifus_smtp_export_print($logs) {
             <?php endforeach; ?>
         </tbody>
     </table>
+    <?php wp_print_scripts('modifus-smtp-print'); ?>
 </body>
 </html>
 <?php

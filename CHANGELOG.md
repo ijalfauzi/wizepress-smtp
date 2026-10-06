@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.1] - 2026-10-06
+
+Preparation for the WordPress.org plugin directory. Passes Plugin Check with no errors or warnings.
+
+### Changed
+- Requires WordPress 6.2 or later (for `%i` identifier placeholders; `wp_mail_succeeded` already needed 5.9).
+- All log queries are fully prepared, with table and column names passed as `%i` placeholders. The log filters are built into fixed queries instead of a WHERE string.
+- All `$_GET`, `$_POST`, `$_REQUEST` and `$_SERVER` reads are unslashed and sanitized.
+- The print/PDF export page loads `assets/css/print.css` and `assets/js/print.js` instead of an inline `<style>` and `onclick` handlers.
+- The Excel export deletes its temporary file with `wp_delete_file()`.
+- Bulk delete and the personal data eraser delete rows one at a time instead of building an `IN (...)` list.
+- Footer credit styles moved to `admin.css`.
+- The WizePress SMTP migration notice is translatable.
+- readme.txt: plugin name matches the plugin header, and the tags no longer use another plugin's name.
+
+### Removed
+- `load_plugin_textdomain()`: WordPress loads translations for plugins hosted on WordPress.org.
+
+### Fixed
+- `includes/class-email-logs-table.php` could be loaded directly.
+
 ## [2.0.0] - 2026-10-06
 
 ### Changed

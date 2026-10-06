@@ -209,3 +209,12 @@
 .tablenav .actions a.button {
     margin-right: 5px;
 }
+
+/* Footer credit */
+.modifus-smtp-credit {
+    font-style: italic;
+}
+
+.modifus-smtp-credit a {
+    text-decoration: underline;
+}

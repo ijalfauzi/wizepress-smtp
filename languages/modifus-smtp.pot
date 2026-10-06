@@ -2,160 +2,160 @@
 # This file is distributed under the GPLv2 or later.
 msgid ""
 msgstr ""
-"Project-Id-Version: Modifus SMTP 2.0.0\n"
+"Project-Id-Version: Modifus SMTP 2.0.1\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/modifus-smtp\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"POT-Creation-Date: 2026-10-06T03:29:53+00:00\n"
+"POT-Creation-Date: 2026-10-06T04:22:56+00:00\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: modifus-smtp\n"
 
 #. Plugin Name of the plugin
-#: modifus-smtp.php
+#: modifus-smtp.php:3
 msgid "Modifus SMTP"
 msgstr ""
 
 #. Plugin URI of the plugin
-#: modifus-smtp.php
+#: modifus-smtp.php:4
 msgid "https://modifus.com/plugins/modifus-smtp"
 msgstr ""
 
 #. Description of the plugin
-#: modifus-smtp.php
+#: modifus-smtp.php:5
 msgid "SMTP & Email Log — make sure your WordPress emails reach the inbox, and see every one that's sent."
 msgstr ""
 
 #. Author of the plugin
-#: modifus-smtp.php
+#: modifus-smtp.php:7
 msgid "Modifus"
 msgstr ""
 
 #. Author URI of the plugin
-#: modifus-smtp.php
+#: modifus-smtp.php:8
 msgid "https://modifus.com"
 msgstr ""
 
 #: admin/log-viewer.php:21
-#: includes/email-logger.php:129
-#: includes/email-logger.php:169
-#: includes/email-logger.php:190
+#: includes/email-logger.php:131
+#: includes/email-logger.php:172
+#: includes/email-logger.php:194
 msgid "Invalid security token."
 msgstr ""
 
 #: admin/log-viewer.php:25
-#: includes/email-logger.php:133
-#: includes/email-logger.php:162
-#: includes/email-logger.php:194
+#: includes/email-logger.php:135
+#: includes/email-logger.php:165
+#: includes/email-logger.php:198
 msgid "Unauthorized."
 msgstr ""
 
-#: admin/log-viewer.php:54
+#: admin/log-viewer.php:55
 msgid "Search Emails"
 msgstr ""
 
-#: admin/log-viewer.php:62
+#: admin/log-viewer.php:63
 msgid "Close Modal"
 msgstr ""
 
-#: admin/log-viewer.php:63
+#: admin/log-viewer.php:64
 msgid "Email Content"
 msgstr ""
 
-#: admin/log-viewer.php:65
+#: admin/log-viewer.php:66
 msgid "Sent at"
 msgstr ""
 
-#: admin/log-viewer.php:66
-#: admin/log-viewer.php:126
-#: includes/class-email-logs-table.php:24
-#: includes/privacy.php:46
+#: admin/log-viewer.php:67
+#: admin/log-viewer.php:111
+#: includes/class-email-logs-table.php:32
+#: includes/privacy.php:48
 msgid "To"
 msgstr ""
 
-#: admin/log-viewer.php:67
-#: admin/log-viewer.php:127
-#: includes/class-email-logs-table.php:25
-#: includes/privacy.php:47
+#: admin/log-viewer.php:68
+#: admin/log-viewer.php:112
+#: includes/class-email-logs-table.php:33
+#: includes/privacy.php:49
 msgid "Subject"
 msgstr ""
 
-#: admin/log-viewer.php:68
+#: admin/log-viewer.php:69
 msgid "Error"
 msgstr ""
 
-#: admin/log-viewer.php:72
+#: admin/log-viewer.php:73
 msgid "Raw Email Content"
 msgstr ""
 
-#: admin/log-viewer.php:73
+#: admin/log-viewer.php:74
 msgid "Preview Content as HTML"
 msgstr ""
 
-#: admin/log-viewer.php:123
+#: admin/log-viewer.php:108
 msgid "ID"
 msgstr ""
 
-#: admin/log-viewer.php:124
-#: includes/class-email-logs-table.php:22
-#: includes/privacy.php:45
+#: admin/log-viewer.php:109
+#: includes/class-email-logs-table.php:30
+#: includes/privacy.php:47
 msgid "Sent At"
 msgstr ""
 
-#: admin/log-viewer.php:125
-#: includes/class-email-logs-table.php:23
-#: includes/privacy.php:48
+#: admin/log-viewer.php:110
+#: includes/class-email-logs-table.php:31
+#: includes/privacy.php:50
 msgid "Status"
 msgstr ""
 
-#: admin/log-viewer.php:128
-#: includes/class-email-logs-table.php:26
+#: admin/log-viewer.php:113
+#: includes/class-email-logs-table.php:34
 msgid "Attachments"
 msgstr ""
 
-#: admin/log-viewer.php:129
-#: includes/class-email-logs-table.php:27
+#: admin/log-viewer.php:114
+#: includes/class-email-logs-table.php:35
 msgid "IP Address"
 msgstr ""
 
-#: admin/log-viewer.php:130
+#: admin/log-viewer.php:115
 msgid "Error Message"
 msgstr ""
 
-#: admin/log-viewer.php:141
-#: includes/class-email-logs-table.php:102
-#: includes/class-email-logs-table.php:255
-#: includes/privacy.php:48
+#: admin/log-viewer.php:126
+#: includes/class-email-logs-table.php:110
+#: includes/class-email-logs-table.php:245
+#: includes/privacy.php:50
 msgid "Success"
 msgstr ""
 
-#: admin/log-viewer.php:141
-#: includes/class-email-logs-table.php:102
-#: includes/class-email-logs-table.php:256
-#: includes/privacy.php:48
+#: admin/log-viewer.php:126
+#: includes/class-email-logs-table.php:110
+#: includes/class-email-logs-table.php:246
+#: includes/privacy.php:50
 msgid "Failed"
 msgstr ""
 
-#: admin/log-viewer.php:282
-#: admin/log-viewer.php:304
-#: includes/privacy.php:42
-#: modifus-smtp.php:79
+#: admin/log-viewer.php:271
+#: admin/log-viewer.php:279
+#: includes/privacy.php:44
+#: modifus-smtp.php:83
 msgid "Email Logs"
 msgstr ""
 
-#: admin/log-viewer.php:301
+#: admin/log-viewer.php:276
 msgid "Print / Save as PDF"
 msgstr ""
 
-#: admin/log-viewer.php:302
+#: admin/log-viewer.php:277
 msgid "Close"
 msgstr ""
 
 #. translators: 1: site name, 2: export date, 3: number of records
-#: admin/log-viewer.php:307
+#: admin/log-viewer.php:282
 #, php-format
 msgid "%1$s • Exported on %2$s • %3$d records"
 msgstr ""
@@ -310,145 +310,149 @@ msgstr ""
 msgid "Enter an email address to send a test message."
 msgstr ""
 
-#: includes/class-email-logs-table.php:48
-#: includes/class-email-logs-table.php:84
+#: includes/class-email-logs-table.php:56
+#: includes/class-email-logs-table.php:92
 msgid "Delete"
 msgstr ""
 
-#: includes/class-email-logs-table.php:73
+#: includes/class-email-logs-table.php:81
 msgid "View Content"
 msgstr ""
 
-#: includes/class-email-logs-table.php:78
-#: modifus-smtp.php:123
+#: includes/class-email-logs-table.php:86
+#: modifus-smtp.php:127
 msgid "Resend"
 msgstr ""
 
-#: includes/class-email-logs-table.php:152
+#: includes/class-email-logs-table.php:160
 msgid "No email logs found."
 msgstr ""
 
-#: includes/class-email-logs-table.php:254
+#: includes/class-email-logs-table.php:244
 msgid "All Statuses"
 msgstr ""
 
-#: includes/class-email-logs-table.php:258
+#: includes/class-email-logs-table.php:248
 msgid "Filter"
 msgstr ""
 
-#: includes/class-email-logs-table.php:260
+#: includes/class-email-logs-table.php:250
 msgid "Clear"
 msgstr ""
 
-#: includes/class-email-logs-table.php:278
+#: includes/class-email-logs-table.php:268
 msgid "Download as CSV"
 msgstr ""
 
-#: includes/class-email-logs-table.php:279
+#: includes/class-email-logs-table.php:269
 msgid "Download as Excel"
 msgstr ""
 
-#: includes/class-email-logs-table.php:280
+#: includes/class-email-logs-table.php:270
 msgid "Print or Save as PDF"
 msgstr ""
 
-#: includes/class-email-logs-table.php:280
+#: includes/class-email-logs-table.php:270
 msgid "Print/PDF"
 msgstr ""
 
-#: includes/class-email-logs-table.php:304
+#: includes/class-email-logs-table.php:294
 msgid "All Dates"
 msgstr ""
 
 #. translators: %s: error message
 #: includes/email-logger.php:26
-#: includes/email-logger.php:235
+#: includes/email-logger.php:240
 msgid "Unknown error"
 msgstr ""
 
-#: includes/email-logger.php:145
-#: includes/email-logger.php:206
+#: includes/email-logger.php:148
+#: includes/email-logger.php:211
 msgid "Log not found."
 msgstr ""
 
-#: includes/email-logger.php:181
-#: modifus-smtp.php:120
+#: includes/email-logger.php:185
+#: modifus-smtp.php:124
 msgid "Failed to delete log."
 msgstr ""
 
-#: includes/email-logger.php:184
+#: includes/email-logger.php:188
 msgid "Log deleted successfully."
 msgstr ""
 
 #. translators: %s: error message
-#: includes/email-logger.php:235
+#: includes/email-logger.php:240
 #, php-format
 msgid "Failed to resend email: %s"
 msgstr ""
 
-#: includes/email-logger.php:239
+#: includes/email-logger.php:244
 msgid "Email resent successfully!"
 msgstr ""
 
 #. translators: %d: number of attachments
-#: includes/email-logger.php:243
+#: includes/email-logger.php:248
 #, php-format
 msgid "%d attachment no longer exists and was not included."
 msgid_plural "%d attachments no longer exist and were not included."
 msgstr[0] ""
 msgstr[1] ""
 
-#: includes/privacy.php:28
-#: includes/privacy.php:58
+#: includes/install.php:144
+msgid "replaces WizePress SMTP. Deactivate WizePress SMTP and your SMTP settings and email logs will move over automatically. You can delete WizePress SMTP after that."
+msgstr ""
+
+#: includes/privacy.php:30
+#: includes/privacy.php:60
 msgid "Modifus SMTP Email Logs"
 msgstr ""
 
-#: includes/privacy.php:90
+#: includes/privacy.php:92
 msgid "When this site sends an email, a copy is kept in an email log: the recipient address, sender, subject, full message, attachment file names, the IP address and user account that triggered it, and whether it was delivered. Administrators can view these logs."
 msgstr ""
 
-#: includes/privacy.php:91
+#: includes/privacy.php:93
 msgid "Logs are kept until an administrator deletes them, or for the number of days set in the plugin's log retention setting."
 msgstr ""
 
-#: modifus-smtp.php:59
+#: modifus-smtp.php:64
 msgid "Logs per page"
 msgstr ""
 
-#: modifus-smtp.php:80
+#: modifus-smtp.php:84
 msgid "SMTP Settings"
 msgstr ""
 
 #. translators: 1: plugin link, 2: version number, 3: Modifus link
-#: modifus-smtp.php:97
+#: modifus-smtp.php:101
 #, php-format
 msgid "You're using %1$s v%2$s by %3$s"
 msgstr ""
 
-#: modifus-smtp.php:118
+#: modifus-smtp.php:122
 msgid "Failed to load email log."
 msgstr ""
 
-#: modifus-smtp.php:119
+#: modifus-smtp.php:123
 msgid "Are you sure you want to delete this email log?"
 msgstr ""
 
-#: modifus-smtp.php:121
+#: modifus-smtp.php:125
 msgid "Are you sure you want to resend this email?"
 msgstr ""
 
-#: modifus-smtp.php:122
+#: modifus-smtp.php:126
 msgid "Sending..."
 msgstr ""
 
-#: modifus-smtp.php:124
+#: modifus-smtp.php:128
 msgid "Failed to resend email."
 msgstr ""
 
-#: modifus-smtp.php:125
+#: modifus-smtp.php:129
 msgid "Request failed. Please try again."
 msgstr ""
 
-#: modifus-smtp.php:133
+#: modifus-smtp.php:137
 msgid "Settings"
 msgstr ""

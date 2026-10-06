@@ -1,4 +1,12 @@
 <?php
+/**
+ * Email logs list table.
+ *
+ * @package Modifus_SMTP
+ */
+
+defined('ABSPATH') || exit;
+
 if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
@@ -80,7 +88,7 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
             'delete' => sprintf(
                 '<a href="#" class="delete-email" data-id="%d" data-nonce="%s">%s</a>',
                 $item->id,
-                $delete_nonce,
+                esc_attr($delete_nonce),
                 esc_html__('Delete', 'modifus-smtp')
             )
         ];
@@ -156,9 +164,6 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
      * Prepare items for display
      */
     public function prepare_items() {
-        global $wpdb;
-
-        $table = modifus_smtp_table();
         $per_page = $this->get_items_per_page('modifus_smtp_logs_per_page', 20);
         $current_page = $this->get_pagenum();
         $offset = ($current_page - 1) * $per_page;
@@ -173,30 +178,18 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
         // Process bulk action
         $this->process_bulk_action();
 
-        // Build query
-        $where = modifus_smtp_logs_where($_REQUEST);
+        $filters = modifus_smtp_logs_filters();
 
-        // Sorting
-        $orderby = isset($_REQUEST['orderby']) ? sanitize_sql_orderby($_REQUEST['orderby']) : 'sent_at';
-        $order = isset($_REQUEST['order']) && strtoupper($_REQUEST['order']) === 'ASC' ? 'ASC' : 'DESC';
+        // Sorting (read-only, like the filters). The column is checked
+        // against an allowlist in modifus_smtp_get_logs().
+        // phpcs:disable WordPress.Security.NonceVerification.Recommended
+        $orderby = isset($_GET['orderby']) ? sanitize_key(wp_unslash($_GET['orderby'])) : 'sent_at';
+        $order   = isset($_GET['order']) ? strtoupper(sanitize_key(wp_unslash($_GET['order']))) : '';
+        // phpcs:enable WordPress.Security.NonceVerification.Recommended
+        $order = $order === 'ASC' ? 'ASC' : 'DESC';
 
-        // Validate orderby
-        $allowed_orderby = ['sent_at', 'to_email', 'subject', 'result'];
-        if (!in_array($orderby, $allowed_orderby, true)) {
-            $orderby = 'sent_at';
-        }
-
-        // Get total count
-        $total_items = $wpdb->get_var("SELECT COUNT(*) FROM $table WHERE $where");
-
-        // Get items
-        $this->items = $wpdb->get_results(
-            $wpdb->prepare(
-                "SELECT * FROM $table WHERE $where ORDER BY $orderby $order, id DESC LIMIT %d OFFSET %d",
-                $per_page,
-                $offset
-            )
-        );
+        $total_items = modifus_smtp_count_logs($filters);
+        $this->items = modifus_smtp_get_logs($filters, $orderby, $order, $per_page, $offset);
 
         // Set pagination
         $this->set_pagination_args([
@@ -212,7 +205,7 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
     public function process_bulk_action() {
         if ('delete' === $this->current_action()) {
             // Verify nonce
-            if (!isset($_REQUEST['_wpnonce']) || !wp_verify_nonce($_REQUEST['_wpnonce'], 'bulk-email_logs')) {
+            if (!isset($_REQUEST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_REQUEST['_wpnonce'])), 'bulk-email_logs')) {
                 return;
             }
 
@@ -220,17 +213,13 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
                 return;
             }
 
-            $log_ids = isset($_REQUEST['log_ids']) ? array_map('intval', $_REQUEST['log_ids']) : [];
+            $log_ids = isset($_REQUEST['log_ids']) ? array_filter(array_map('absint', (array) wp_unslash($_REQUEST['log_ids']))) : [];
 
-            if (!empty($log_ids)) {
-                global $wpdb;
-                $ids_placeholder = implode(',', array_fill(0, count($log_ids), '%d'));
-                $wpdb->query(
-                    $wpdb->prepare(
-                        "DELETE FROM " . modifus_smtp_table() . " WHERE id IN ($ids_placeholder)",
-                        ...$log_ids
-                    )
-                );
+            global $wpdb;
+            // At most one page of logs
+            foreach ($log_ids as $log_id) {
+                // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
+                $wpdb->delete(modifus_smtp_table(), ['id' => $log_id], ['%d']);
             }
         }
     }
@@ -243,13 +232,14 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
             return;
         }
 
-        $status = isset($_REQUEST['status']) ? sanitize_key($_REQUEST['status']) : '';
-        $search = isset($_REQUEST['s']) ? sanitize_text_field(wp_unslash($_REQUEST['s'])) : '';
-        $date = isset($_REQUEST['m']) ? sanitize_text_field($_REQUEST['m']) : '';
+        $filters = modifus_smtp_logs_filters();
+        $status = $filters['status'];
+        $search = $filters['search'];
+        $date = $filters['month'];
         $has_filter = !empty($status) || !empty($search) || !empty($date);
         ?>
         <div class="alignleft actions">
-            <?php $this->render_months_dropdown(); ?>
+            <?php $this->render_months_dropdown($date); ?>
             <select name="status">
                 <option value=""><?php esc_html_e('All Statuses', 'modifus-smtp'); ?></option>
                 <option value="success" <?php selected($status, 'success'); ?>><?php esc_html_e('Success', 'modifus-smtp'); ?></option>
@@ -285,20 +275,20 @@ class Modifus_SMTP_Logs_Table extends WP_List_Table {
     /**
      * Display months dropdown for filtering
      */
-    private function render_months_dropdown() {
+    private function render_months_dropdown($selected) {
         global $wpdb;
 
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
         $months = $wpdb->get_results(
-            "SELECT DISTINCT YEAR(sent_at) AS year, MONTH(sent_at) AS month
-             FROM " . modifus_smtp_table() . "
-             ORDER BY year DESC, month DESC"
+            $wpdb->prepare(
+                'SELECT DISTINCT YEAR(sent_at) AS year, MONTH(sent_at) AS month FROM %i ORDER BY year DESC, month DESC',
+                modifus_smtp_table()
+            )
         );
 
         if (empty($months)) {
             return;
         }
-
-        $selected = isset($_REQUEST['m']) ? sanitize_text_field($_REQUEST['m']) : '';
         ?>
         <select name="m">
             <option value=""><?php esc_html_e('All Dates', 'modifus-smtp'); ?></option>

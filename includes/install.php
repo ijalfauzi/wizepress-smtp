@@ -116,20 +116,23 @@ function modifus_smtp_migrate_legacy() {
     }
 
     // Log table
+    // phpcs:disable WordPress.DB.DirectDatabaseQuery -- One-time migration of the plugin's own table.
     $legacy_table = $wpdb->prefix . 'wzp_email_logs';
     $legacy_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($legacy_table))) === $legacy_table;
     $new_table     = modifus_smtp_table();
     $new_exists    = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($new_table))) === $new_table;
     if ($legacy_exists && !$new_exists) {
-        $wpdb->query("RENAME TABLE `$legacy_table` TO `$new_table`");
+        $wpdb->query($wpdb->prepare('RENAME TABLE %i TO %i', $legacy_table, $new_table));
     }
 
-    // Logs-per-page screen option
+    // Logs-per-page screen option. No API renames a meta key for all users.
+    // phpcs:disable WordPress.DB.SlowDBQuery.slow_db_query_meta_key -- One-time update, keyed on meta_key.
     $wpdb->update(
         $wpdb->usermeta,
         ['meta_key' => 'modifus_smtp_logs_per_page'],
         ['meta_key' => 'wzp_logs_per_page']
     );
+    // phpcs:enable
 }
 
 // Ask for WizePress SMTP to be deactivated while both are active.
@@ -137,7 +140,7 @@ add_action('admin_notices', function () {
     if (!modifus_smtp_legacy_active() || !current_user_can('activate_plugins')) {
         return;
     }
-    echo '<div class="notice notice-warning"><p><strong>Modifus SMTP</strong> replaces WizePress SMTP. '
-        . 'Deactivate WizePress SMTP and your SMTP settings and email logs will move over automatically. '
-        . 'You can delete WizePress SMTP after that.</p></div>';
+    echo '<div class="notice notice-warning"><p><strong>Modifus SMTP</strong> '
+        . esc_html__('replaces WizePress SMTP. Deactivate WizePress SMTP and your SMTP settings and email logs will move over automatically. You can delete WizePress SMTP after that.', 'modifus-smtp')
+        . '</p></div>';
 });
