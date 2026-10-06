@@ -1,0 +1,13 @@
+{
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "env": {
+    "GIT_AUTHOR_NAME": "Ijal Fauzi",
+    "GIT_AUTHOR_EMAIL": "ijaliffauzi@gmail.com",
+    "GIT_COMMITTER_NAME": "Ijal Fauzi",
+    "GIT_COMMITTER_EMAIL": "ijaliffauzi@gmail.com"
+  }
+}
