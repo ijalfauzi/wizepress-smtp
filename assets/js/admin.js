@@ -5,10 +5,10 @@ jQuery(document).ready(function ($) {
         e.preventDefault();
         const id = $(this).data("id");
 
-        $.get(wzpAjax.ajax_url, {
-            action: "wzp_get_email_log",
+        $.get(modifusSmtp.ajax_url, {
+            action: "modifus_smtp_get_email_log",
             id: id,
-            nonce: wzpAjax.nonce
+            nonce: modifusSmtp.nonce
         }, function (response) {
             if (response.success) {
                 const res = response.data;
@@ -48,8 +48,8 @@ jQuery(document).ready(function ($) {
         const id = $link.data("id");
         const nonce = $link.data("nonce");
 
-        $.post(wzpAjax.ajax_url, {
-            action: "wzp_delete_email_log",
+        $.post(modifusSmtp.ajax_url, {
+            action: "modifus_smtp_delete_email_log",
             id: id,
             nonce: nonce
         }, function (response) {
@@ -76,10 +76,10 @@ jQuery(document).ready(function ($) {
 
         $link.text("Sending...");
 
-        $.post(wzpAjax.ajax_url, {
-            action: "wzp_resend_email",
+        $.post(modifusSmtp.ajax_url, {
+            action: "modifus_smtp_resend_email",
             id: id,
-            nonce: wzpAjax.nonce
+            nonce: modifusSmtp.nonce
         }, function (response) {
             if (response.success) {
                 alert(response.data);

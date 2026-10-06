@@ -3,7 +3,7 @@ if (!class_exists('WP_List_Table')) {
     require_once ABSPATH . 'wp-admin/includes/class-wp-list-table.php';
 }
 
-class WZP_Email_Logs_Table extends WP_List_Table {
+class Modifus_SMTP_Logs_Table extends WP_List_Table {
 
     public function __construct() {
         parent::__construct([
@@ -64,7 +64,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
         $date_display = date_i18n('j F Y', $timestamp);
         $time_display = date_i18n('g:i:s a', $timestamp);
 
-        $delete_nonce = wp_create_nonce('wzp_delete_log_' . $item->id);
+        $delete_nonce = wp_create_nonce('modifus_smtp_delete_log_' . $item->id);
 
         $actions = [
             'view'   => sprintf(
@@ -83,7 +83,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
         ];
 
         return sprintf(
-            '%s<br><span class="wzp-time">@ %s</span><br><span class="wzp-id">(id:%d)</span>%s',
+            '%s<br><span class="modifus-smtp-time">@ %s</span><br><span class="modifus-smtp-id">(id:%d)</span>%s',
             esc_html($date_display),
             esc_html($time_display),
             $item->id,
@@ -95,8 +95,8 @@ class WZP_Email_Logs_Table extends WP_List_Table {
      * Result/Status column
      */
     public function column_result($item) {
-        $class = $item->result ? 'wzp-status-success' : 'wzp-status-failed';
-        return sprintf('<span class="wzp-status-icon %s"></span>', $class);
+        $class = $item->result ? 'modifus-smtp-status-success' : 'modifus-smtp-status-failed';
+        return sprintf('<span class="modifus-smtp-status-icon %s"></span>', $class);
     }
 
     /**
@@ -155,8 +155,8 @@ class WZP_Email_Logs_Table extends WP_List_Table {
     public function prepare_items() {
         global $wpdb;
 
-        $table = WZP_SMTP_TABLE;
-        $per_page = $this->get_items_per_page('wzp_logs_per_page', 20);
+        $table = MODIFUS_SMTP_TABLE;
+        $per_page = $this->get_items_per_page('modifus_smtp_logs_per_page', 20);
         $current_page = $this->get_pagenum();
         $offset = ($current_page - 1) * $per_page;
 
@@ -255,7 +255,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
                 $ids_placeholder = implode(',', array_fill(0, count($log_ids), '%d'));
                 $wpdb->query(
                     $wpdb->prepare(
-                        "DELETE FROM " . WZP_SMTP_TABLE . " WHERE id IN ($ids_placeholder)",
+                        "DELETE FROM " . MODIFUS_SMTP_TABLE . " WHERE id IN ($ids_placeholder)",
                         ...$log_ids
                     )
                 );
@@ -285,18 +285,18 @@ class WZP_Email_Logs_Table extends WP_List_Table {
             </select>
             <?php submit_button('Filter', '', 'filter_action', false); ?>
             <?php if ($has_filter) : ?>
-                <a href="<?php echo esc_url(admin_url('options-general.php?page=wzp-smtp&tab=logs')); ?>" class="button">Clear</a>
+                <a href="<?php echo esc_url(admin_url('options-general.php?page=modifus-smtp&tab=logs')); ?>" class="button">Clear</a>
             <?php endif; ?>
         </div>
-        <div class="alignleft actions wzp-export-actions">
+        <div class="alignleft actions modifus-smtp-export-actions">
             <?php
             $base_params = [
-                'page'   => 'wzp-smtp',
+                'page'   => 'modifus-smtp',
                 'tab'    => 'logs',
                 's'      => $search,
                 'status' => $status,
                 'm'      => $date,
-                '_wpnonce' => wp_create_nonce('wzp_export')
+                '_wpnonce' => wp_create_nonce('modifus_smtp_export')
             ];
 
             $export_csv_url = add_query_arg(array_merge($base_params, ['action' => 'export_csv']), admin_url('options-general.php'));
@@ -318,7 +318,7 @@ class WZP_Email_Logs_Table extends WP_List_Table {
 
         $months = $wpdb->get_results(
             "SELECT DISTINCT YEAR(sent_at) AS year, MONTH(sent_at) AS month
-             FROM " . WZP_SMTP_TABLE . "
+             FROM " . MODIFUS_SMTP_TABLE . "
              ORDER BY sent_at DESC"
         );
 

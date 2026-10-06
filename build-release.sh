@@ -5,8 +5,8 @@
 set -e
 
 # Get version from plugin file
-VERSION=$(grep -oP "Version:\s*\K[\d.]+" wizepress-smtp.php)
-PLUGIN_SLUG="wizepress-smtp"
+VERSION=$(grep -oP "Version:\s*\K[\d.]+" modifus-smtp.php)
+PLUGIN_SLUG="modifus-smtp"
 BUILD_DIR="build"
 RELEASE_DIR="$BUILD_DIR/$PLUGIN_SLUG"
 

@@ -1,15 +1,15 @@
 <?php
 // Handle exports before headers are sent
-add_action('admin_init', 'wzp_handle_export');
-function wzp_handle_export() {
-    if (!isset($_GET['page']) || $_GET['page'] !== 'wzp-smtp') {
+add_action('admin_init', 'modifus_smtp_handle_export');
+function modifus_smtp_handle_export() {
+    if (!isset($_GET['page']) || $_GET['page'] !== 'modifus-smtp') {
         return;
     }
     
     $action = isset($_GET['action']) ? sanitize_key($_GET['action']) : '';
     
     if (in_array($action, ['export_csv', 'export_excel', 'export_print'], true)) {
-        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'wzp_export')) {
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'modifus_smtp_export')) {
             wp_die('Invalid security token.');
         }
 
@@ -17,33 +17,33 @@ function wzp_handle_export() {
             wp_die('Unauthorized.');
         }
         
-        $logs = wzp_get_export_logs();
-        $filename = wzp_get_export_filename();
+        $logs = modifus_smtp_get_export_logs();
+        $filename = modifus_smtp_get_export_filename();
         
         switch ($action) {
             case 'export_csv':
-                wzp_export_csv($logs, $filename);
+                modifus_smtp_export_csv($logs, $filename);
                 break;
             case 'export_excel':
-                wzp_export_excel($logs, $filename);
+                modifus_smtp_export_excel($logs, $filename);
                 break;
             case 'export_print':
-                wzp_export_print($logs);
+                modifus_smtp_export_print($logs);
                 break;
         }
     }
 }
 
-function wzp_email_logs_page() {
-    $logs_table = new WZP_Email_Logs_Table();
+function modifus_smtp_logs_page() {
+    $logs_table = new Modifus_SMTP_Logs_Table();
     $logs_table->prepare_items();
     ?>
-    <div class="wzp-email-logs-wrap">
+    <div class="modifus-smtp-email-logs-wrap">
         <form method="get">
-            <input type="hidden" name="page" value="wzp-smtp" />
+            <input type="hidden" name="page" value="modifus-smtp" />
             <input type="hidden" name="tab" value="logs" />
             <?php
-            $logs_table->search_box('Search Emails', 'wzp-search');
+            $logs_table->search_box('Search Emails', 'modifus-smtp-search');
             $logs_table->display();
             ?>
         </form>
@@ -57,7 +57,7 @@ function wzp_email_logs_page() {
                 <tr><th>Sent at</th><td id="log-sent-at"></td></tr>
                 <tr><th>To</th><td id="log-to"></td></tr>
                 <tr><th>Subject</th><td id="log-subject"></td></tr>
-                <tr id="log-error-row" style="display:none;"><th>Error</th><td id="log-error-message" class="wzp-error-text"></td></tr>
+                <tr id="log-error-row" style="display:none;"><th>Error</th><td id="log-error-message" class="modifus-smtp-error-text"></td></tr>
             </table>
 
             <div class="modal-toolbar">
@@ -75,9 +75,9 @@ function wzp_email_logs_page() {
 /**
  * Get logs for export with current filters
  */
-function wzp_get_export_logs() {
+function modifus_smtp_get_export_logs() {
     global $wpdb;
-    $table = WZP_SMTP_TABLE;
+    $table = MODIFUS_SMTP_TABLE;
 
     $where = '1=1';
     $search = isset($_GET['s']) ? sanitize_text_field($_GET['s']) : '';
@@ -117,7 +117,7 @@ function wzp_get_export_logs() {
 /**
  * Generate descriptive filename for exports
  */
-function wzp_get_export_filename() {
+function modifus_smtp_get_export_filename() {
     $parts = ['email-logs'];
     
     $status = isset($_GET['status']) ? sanitize_text_field($_GET['status']) : '';
@@ -138,7 +138,7 @@ function wzp_get_export_filename() {
 /**
  * Format log row for export
  */
-function wzp_format_log_row($log) {
+function modifus_smtp_format_log_row($log) {
     $to = is_serialized($log['to_email']) ? maybe_unserialize($log['to_email']) : $log['to_email'];
     $to = is_array($to) ? implode(', ', $to) : $to;
     
@@ -157,7 +157,7 @@ function wzp_format_log_row($log) {
 /**
  * Export as CSV
  */
-function wzp_export_csv($logs, $filename) {
+function modifus_smtp_export_csv($logs, $filename) {
     header('Content-Type: text/csv; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '.csv"');
     header('Pragma: no-cache');
@@ -169,7 +169,7 @@ function wzp_export_csv($logs, $filename) {
     fputcsv($output, ['ID', 'Sent At', 'Status', 'To', 'Subject', 'Attachments', 'IP Address', 'Error Message'], ',', '"', '\\');
 
     foreach ($logs as $log) {
-        $row = wzp_format_log_row($log);
+        $row = modifus_smtp_format_log_row($log);
         fputcsv($output, array_values($row), ',', '"', '\\');
     }
 
@@ -180,7 +180,7 @@ function wzp_export_csv($logs, $filename) {
 /**
  * Export as Excel (HTML table format)
  */
-function wzp_export_excel($logs, $filename) {
+function modifus_smtp_export_excel($logs, $filename) {
     header('Content-Type: application/vnd.ms-excel; charset=utf-8');
     header('Content-Disposition: attachment; filename="' . $filename . '.xls"');
     header('Pragma: no-cache');
@@ -192,7 +192,7 @@ function wzp_export_excel($logs, $filename) {
     echo '<tr><th>ID</th><th>Sent At</th><th>Status</th><th>To</th><th>Subject</th><th>Attachments</th><th>IP Address</th><th>Error Message</th></tr>';
 
     foreach ($logs as $log) {
-        $row = wzp_format_log_row($log);
+        $row = modifus_smtp_format_log_row($log);
         echo '<tr>';
         foreach ($row as $cell) {
             echo '<td>' . esc_html($cell) . '</td>';
@@ -207,7 +207,7 @@ function wzp_export_excel($logs, $filename) {
 /**
  * Export as Print-friendly HTML page
  */
-function wzp_export_print($logs) {
+function modifus_smtp_export_print($logs) {
     $site_name = get_bloginfo('name');
     $export_date = date_i18n(get_option('date_format') . ' ' . get_option('time_format'));
     $total_logs = count($logs);
@@ -255,7 +255,7 @@ function wzp_export_print($logs) {
         </thead>
         <tbody>
             <?php foreach ($logs as $log) : 
-                $row = wzp_format_log_row($log);
+                $row = modifus_smtp_format_log_row($log);
             ?>
             <tr>
                 <td><?php echo esc_html($row['id']); ?></td>

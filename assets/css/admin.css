@@ -83,7 +83,7 @@
 }
 
 /* Status Icons */
-.wzp-status-icon {
+.modifus-smtp-status-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -95,82 +95,82 @@
     color: white;
 }
 
-.wzp-status-success {
+.modifus-smtp-status-success {
     background-color: #46b450;
 }
 
-.wzp-status-success::before {
+.modifus-smtp-status-success::before {
     content: '✓';
 }
 
-.wzp-status-failed {
+.modifus-smtp-status-failed {
     background-color: #dc3232;
 }
 
-.wzp-status-failed::before {
+.modifus-smtp-status-failed::before {
     content: '✕';
 }
 
 /* Status icons in notices */
-.notice .wzp-status-icon {
+.notice .modifus-smtp-status-icon {
     margin-right: 8px;
     vertical-align: middle;
 }
 
 /* Email Logs Table Wrapper */
-.wzp-email-logs-wrap {
+.modifus-smtp-email-logs-wrap {
     max-width: 1100px;
 }
 
-.wzp-email-logs-wrap .wp-list-table {
+.modifus-smtp-email-logs-wrap .wp-list-table {
     margin-top: 1em;
 }
 
 /* Vertical center all cells */
-.wzp-email-logs-wrap .wp-list-table td,
-.wzp-email-logs-wrap .wp-list-table th {
+.modifus-smtp-email-logs-wrap .wp-list-table td,
+.modifus-smtp-email-logs-wrap .wp-list-table th {
     vertical-align: middle;
 }
 
 /* Column widths */
-.wzp-email-logs-wrap .column-cb {
+.modifus-smtp-email-logs-wrap .column-cb {
     width: 30px;
 }
 
-.wzp-email-logs-wrap .column-sent_at {
+.modifus-smtp-email-logs-wrap .column-sent_at {
     width: 150px;
     vertical-align: top;
 }
 
-.wzp-email-logs-wrap .column-result {
+.modifus-smtp-email-logs-wrap .column-result {
     width: 100px;
     text-align: center;
 }
 
-.wzp-email-logs-wrap .column-to_email {
+.modifus-smtp-email-logs-wrap .column-to_email {
     width: 200px;
 }
 
-.wzp-email-logs-wrap .column-subject {
+.modifus-smtp-email-logs-wrap .column-subject {
     min-width: 150px;
 }
 
-.wzp-email-logs-wrap .column-attachments {
+.modifus-smtp-email-logs-wrap .column-attachments {
     width: 95px;
     text-align: center;
 }
 
-.wzp-email-logs-wrap .column-ip_address {
+.modifus-smtp-email-logs-wrap .column-ip_address {
     width: 120px;
 }
 
 /* Sent At column styling */
-.wzp-email-logs-wrap .wzp-time {
+.modifus-smtp-email-logs-wrap .modifus-smtp-time {
     color: #646970;
     font-size: 12px;
 }
 
-.wzp-email-logs-wrap .wzp-id {
+.modifus-smtp-email-logs-wrap .modifus-smtp-id {
     color: #a7aaad;
     font-size: 11px;
     display: block;
@@ -178,25 +178,25 @@
 }
 
 /* Row actions delete link */
-.wzp-email-logs-wrap .row-actions .delete a {
+.modifus-smtp-email-logs-wrap .row-actions .delete a {
     color: #b32d2e;
 }
 
-.wzp-email-logs-wrap .row-actions .delete a:hover {
+.modifus-smtp-email-logs-wrap .row-actions .delete a:hover {
     color: #a00;
 }
 
 /* Row actions resend link */
-.wzp-email-logs-wrap .row-actions .resend a {
+.modifus-smtp-email-logs-wrap .row-actions .resend a {
     color: #0073aa;
 }
 
-.wzp-email-logs-wrap .row-actions .resend a:hover {
+.modifus-smtp-email-logs-wrap .row-actions .resend a:hover {
     color: #005177;
 }
 
 /* Error message styling in modal */
-.wzp-error-text {
+.modifus-smtp-error-text {
     color: #dc3232;
     font-weight: 500;
 }

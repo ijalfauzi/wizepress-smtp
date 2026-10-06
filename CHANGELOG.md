@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2026-10-06
+
+### Changed
+- **Renamed from WizePress SMTP to Modifus SMTP.** New plugin folder and main file (`modifus-smtp/modifus-smtp.php`), text domain `modifus-smtp`, admin page `Settings > Modifus SMTP`.
+- Author is now Modifus (https://modifus.com).
+- Internal prefixes renamed from `wzp_` / `WZP_` to `modifus_smtp_` / `MODIFUS_SMTP_`.
+- Settings option renamed to `modifus_smtp_settings` and log table to `{prefix}modifus_smtp_logs`.
+
+### Added
+- Automatic migration from WizePress SMTP: settings, email logs and the logs-per-page screen option are moved over once WizePress SMTP is deactivated. An admin notice asks to deactivate it while both are active.
+- Index on `sent_at` in the log table.
+
+### Fixed
+- Log table schema now upgrades on in-place plugin updates. Previously `CREATE TABLE IF NOT EXISTS` stopped `dbDelta()` from adding new columns, and the activation hook doesn't run on updates, so sites installed before v1.1.0 could silently stop logging.
+
 ## [1.3.0] - 2026-01-02
 
 ### Added
