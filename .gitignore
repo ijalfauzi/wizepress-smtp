@@ -8,3 +8,6 @@ vendor/
 *.zip
 *.bak
 *.tmp
+
+# Local editor settings
+.claude/
