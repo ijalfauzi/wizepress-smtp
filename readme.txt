@@ -49,7 +49,7 @@ Modifus SMTP is the new name of WizePress SMTP. Install and activate Modifus SMT
 
 = How do I keep the SMTP password out of the database? =
 
-Add `define( 'MODIFUS_SMTP_PASSWORD', 'your-password' );` to wp-config.php. The password field on the settings page is then disabled.
+Define the `MODIFUS_SMTP_PASSWORD` constant in wp-config.php, set to your SMTP password. The password field on the settings page is then disabled.
 
 = The settings page says the saved password can't be read =
 
