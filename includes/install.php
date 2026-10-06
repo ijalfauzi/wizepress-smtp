@@ -39,7 +39,7 @@ function modifus_smtp_install() {
 
     modifus_smtp_migrate_legacy();
 
-    $table   = MODIFUS_SMTP_TABLE;
+    $table   = modifus_smtp_table();
     $charset = $wpdb->get_charset_collate();
 
     // dbDelta format: no IF NOT EXISTS, two spaces after PRIMARY KEY.
@@ -65,7 +65,38 @@ function modifus_smtp_install() {
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta($sql);
 
+    modifus_smtp_encrypt_stored_password();
+    modifus_smtp_schedule_cleanup();
+
     update_option('modifus_smtp_db_version', MODIFUS_SMTP_DB_VERSION);
+}
+
+/**
+ * Encrypt a password saved in plain text by an earlier version.
+ */
+function modifus_smtp_encrypt_stored_password() {
+    $settings = get_option('modifus_smtp_settings', null);
+    if (!is_array($settings) || empty($settings['smtp_pass']) || strpos($settings['smtp_pass'], 'enc:') === 0) {
+        return;
+    }
+    $settings['smtp_pass'] = modifus_smtp_encrypt($settings['smtp_pass']);
+    update_option('modifus_smtp_settings', $settings);
+}
+
+/**
+ * Schedule the daily log cleanup.
+ */
+function modifus_smtp_schedule_cleanup() {
+    if (!wp_next_scheduled('modifus_smtp_cleanup_logs')) {
+        wp_schedule_event(time() + HOUR_IN_SECONDS, 'daily', 'modifus_smtp_cleanup_logs');
+    }
+}
+
+/**
+ * Deactivation: stop the scheduled cleanup.
+ */
+function modifus_smtp_deactivate() {
+    wp_clear_scheduled_hook('modifus_smtp_cleanup_logs');
 }
 
 /**
@@ -87,9 +118,10 @@ function modifus_smtp_migrate_legacy() {
     // Log table
     $legacy_table = $wpdb->prefix . 'wzp_email_logs';
     $legacy_exists = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($legacy_table))) === $legacy_table;
-    $new_exists    = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like(MODIFUS_SMTP_TABLE))) === MODIFUS_SMTP_TABLE;
+    $new_table     = modifus_smtp_table();
+    $new_exists    = $wpdb->get_var($wpdb->prepare('SHOW TABLES LIKE %s', $wpdb->esc_like($new_table))) === $new_table;
     if ($legacy_exists && !$new_exists) {
-        $wpdb->query("RENAME TABLE `$legacy_table` TO `" . MODIFUS_SMTP_TABLE . '`');
+        $wpdb->query("RENAME TABLE `$legacy_table` TO `$new_table`");
     }
 
     // Logs-per-page screen option

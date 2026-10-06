@@ -6,13 +6,20 @@ Modifus SMTP sends your WordPress email through your own SMTP server and keeps a
 
 ## ✨ Features
 
-- Easy-to-use SMTP settings page
-- Send test email directly from admin
-- Logs all outgoing emails, with search, date and status filters
+**SMTP**
+- Works with any SMTP server: SSL, TLS or no encryption, with or without a login
+- Password stored encrypted, or set in `wp-config.php` with `MODIFUS_SMTP_PASSWORD`
+- Set the From email and name for every email, or only replace WordPress's default
+- Send a test email from the settings page, with the server's error shown if it fails
+
+**Email log**
+- Logs every outgoing email, including the error for ones that failed
+- Search, filter by month or status, and sort
+- View content as raw text or an HTML preview
 - Resend any logged email
-- Export logs to CSV, Excel or print/PDF
-- Toggle between raw and HTML preview in modal
-- Logs saved in a custom database table for better performance
+- Export to CSV, Excel (.xlsx) or print/PDF
+- Delete logs automatically after a set number of days
+- Works with WordPress's personal data export and erase tools
 
 ## 📦 Installation
 

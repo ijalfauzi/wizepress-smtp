@@ -30,7 +30,7 @@ jQuery(document).ready(function ($) {
 
                 $("#email-log-modal-overlay").css('display', 'flex').hide().fadeIn(200);
             } else {
-                alert(response.data || "Failed to load email log.");
+                alert(response.data || modifusSmtp.i18n.loadFailed);
             }
         });
     });
@@ -39,7 +39,7 @@ jQuery(document).ready(function ($) {
     $(document).on("click", ".delete-email", function (e) {
         e.preventDefault();
 
-        if (!confirm("Are you sure you want to delete this email log?")) {
+        if (!confirm(modifusSmtp.i18n.confirmDelete)) {
             return;
         }
 
@@ -58,7 +58,7 @@ jQuery(document).ready(function ($) {
                     $(this).remove();
                 });
             } else {
-                alert(response.data || "Failed to delete log.");
+                alert(response.data || modifusSmtp.i18n.deleteFailed);
             }
         });
     });
@@ -67,14 +67,14 @@ jQuery(document).ready(function ($) {
     $(document).on("click", ".resend-email", function (e) {
         e.preventDefault();
 
-        if (!confirm("Are you sure you want to resend this email?")) {
+        if (!confirm(modifusSmtp.i18n.confirmResend)) {
             return;
         }
 
         const $link = $(this);
         const id = $link.data("id");
 
-        $link.text("Sending...");
+        $link.text(modifusSmtp.i18n.sending);
 
         $.post(modifusSmtp.ajax_url, {
             action: "modifus_smtp_resend_email",
@@ -85,12 +85,12 @@ jQuery(document).ready(function ($) {
                 alert(response.data);
                 location.reload();
             } else {
-                alert(response.data || "Failed to resend email.");
-                $link.text("Resend");
+                alert(response.data || modifusSmtp.i18n.resendFailed);
+                $link.text(modifusSmtp.i18n.resend);
             }
         }).fail(function () {
-            alert("Request failed. Please try again.");
-            $link.text("Resend");
+            alert(modifusSmtp.i18n.requestFailed);
+            $link.text(modifusSmtp.i18n.resend);
         });
     });
 
