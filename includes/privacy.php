@@ -12,9 +12,11 @@ defined('ABSPATH') || exit;
  */
 function modifus_smtp_privacy_rows($email, $page, $per_page = 100) {
     global $wpdb;
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
     return $wpdb->get_results(
         $wpdb->prepare(
-            "SELECT id, to_email, subject, sent_at, result FROM " . modifus_smtp_table() . " WHERE to_email LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d",
+            'SELECT id, to_email, subject, sent_at, result FROM %i WHERE to_email LIKE %s ORDER BY id ASC LIMIT %d OFFSET %d',
+            modifus_smtp_table(),
             '%' . $wpdb->esc_like($email) . '%',
             $per_page,
             ($page - 1) * $per_page
@@ -68,9 +70,9 @@ function modifus_smtp_privacy_eraser($email, $page = 1) {
     $rows = modifus_smtp_privacy_rows($email, 1, 100);
     $ids  = wp_list_pluck($rows, 'id');
 
-    if ($ids) {
-        $placeholders = implode(',', array_fill(0, count($ids), '%d'));
-        $wpdb->query($wpdb->prepare("DELETE FROM " . modifus_smtp_table() . " WHERE id IN ($placeholders)", ...$ids));
+    foreach ($ids as $id) {
+        // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Plugin's own log table.
+        $wpdb->delete(modifus_smtp_table(), ['id' => $id], ['%d']);
     }
 
     return [

@@ -45,4 +45,4 @@ Built by [Ijal Fauzi](https://github.com/ijalfauzi) at [Modifus](https://modifus
 
 ---
 
-Modifus SMTP | Version 2.0.0
+Modifus SMTP | Version 2.0.1

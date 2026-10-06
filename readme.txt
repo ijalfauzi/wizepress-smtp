@@ -1,10 +1,10 @@
-=== Modifus SMTP – Email Log & Deliverability ===
+=== Modifus SMTP ===
 Contributors: ijalfauzi
-Tags: smtp, email log, mail, wp mail smtp, deliverability
-Requires at least: 5.6
+Tags: smtp, email log, mail, email, deliverability
+Requires at least: 6.2
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 2.0.0
+Stable tag: 2.0.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -59,7 +59,19 @@ The password is encrypted with the secret keys in wp-config.php. If those keys c
 
 Yes, the full message is kept so you can view and resend it. That can include sensitive content such as password reset links, so set **Keep Logs For** to delete old logs automatically.
 
+== Upgrade Notice ==
+
+= 2.0.1 =
+Code quality and security hardening for the WordPress.org plugin directory. Requires WordPress 6.2 or later.
+
 == Changelog ==
+
+= 2.0.1 =
+* Requires WordPress 6.2 or later.
+* Database queries use prepared table and column names.
+* All request input is unslashed and sanitized.
+* The print/PDF export page loads its styles and script as files.
+* Coding standards fixes for the WordPress.org plugin directory.
 
 = 2.0.0 =
 * Renamed from WizePress SMTP to Modifus SMTP. Settings and logs move over automatically.

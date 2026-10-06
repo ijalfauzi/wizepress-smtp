@@ -18,7 +18,8 @@ function modifus_smtp_uninstall_site() {
 
     // Delete the email logs table
     $table_name = $wpdb->prefix . 'modifus_smtp_logs';
-    $wpdb->query("DROP TABLE IF EXISTS {$table_name}");
+    // phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.DirectDatabaseQuery.SchemaChange -- Removing the plugin's own table on uninstall.
+    $wpdb->query($wpdb->prepare('DROP TABLE IF EXISTS %i', $table_name));
 
     // Delete plugin options
     delete_option('modifus_smtp_settings');
@@ -28,8 +29,8 @@ function modifus_smtp_uninstall_site() {
 }
 
 if (is_multisite()) {
-    foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $site_id) {
-        switch_to_blog($site_id);
+    foreach (get_sites(['fields' => 'ids', 'number' => 0]) as $modifus_smtp_site_id) {
+        switch_to_blog($modifus_smtp_site_id);
         modifus_smtp_uninstall_site();
         restore_current_blog();
     }

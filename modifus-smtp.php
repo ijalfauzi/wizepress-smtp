@@ -3,14 +3,14 @@
  * Plugin Name: Modifus SMTP
  * Plugin URI: https://modifus.com/plugins/modifus-smtp
  * Description: SMTP & Email Log — make sure your WordPress emails reach the inbox, and see every one that's sent.
- * Version: 2.0.0
+ * Version: 2.0.1
  * Author: Modifus
  * Author URI: https://modifus.com
  * License: GPLv2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Text Domain: modifus-smtp
  * Domain Path: /languages
- * Requires at least: 5.6
+ * Requires at least: 6.2
  * Requires PHP: 7.4
  *
  * @package Modifus_SMTP
@@ -19,8 +19,9 @@
 
 defined('ABSPATH') || exit;
 
-define('MODIFUS_SMTP_VERSION', '2.0.0');
+define('MODIFUS_SMTP_VERSION', '2.0.1');
 define('MODIFUS_SMTP_DB_VERSION', '2.0.0');
+define('MODIFUS_SMTP_FILE', __FILE__);
 
 /**
  * Log table for the current site (follows switch_to_blog() on multisite).
@@ -43,18 +44,22 @@ register_activation_hook(__FILE__, 'modifus_smtp_install');
 register_deactivation_hook(__FILE__, 'modifus_smtp_deactivate');
 add_action('plugins_loaded', 'modifus_smtp_maybe_upgrade');
 
-add_action('init', function () {
-    load_plugin_textdomain('modifus-smtp', false, dirname(plugin_basename(__FILE__)) . '/languages');
-});
-
 add_action('admin_menu', function () {
     $hook = add_options_page('Modifus SMTP', 'Modifus SMTP', 'manage_options', 'modifus-smtp', 'modifus_smtp_render_tabs');
     add_action("load-$hook", 'modifus_smtp_add_screen_options');
 });
 
+/**
+ * Current settings page tab. Only selects what is shown, so no nonce.
+ */
+function modifus_smtp_current_tab() {
+    // phpcs:ignore WordPress.Security.NonceVerification.Recommended
+    $tab = isset($_GET['tab']) ? sanitize_key(wp_unslash($_GET['tab'])) : 'logs';
+    return in_array($tab, ['settings', 'logs'], true) ? $tab : 'logs';
+}
+
 function modifus_smtp_add_screen_options() {
-    $tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'logs';
-    if ($tab === 'logs') {
+    if (modifus_smtp_current_tab() === 'logs') {
         add_screen_option('per_page', [
             'label'   => __('Logs per page', 'modifus-smtp'),
             'default' => 20,
@@ -71,8 +76,7 @@ add_filter('set-screen-option', function ($status, $option, $value) {
 }, 10, 3);
 
 function modifus_smtp_render_tabs() {
-    $active_tab = isset($_GET['tab']) ? sanitize_key($_GET['tab']) : 'logs';
-    $active_tab = in_array($active_tab, ['settings', 'logs'], true) ? $active_tab : 'logs';
+    $active_tab = modifus_smtp_current_tab();
 
     echo '<div class="wrap"><h1>Modifus SMTP</h1>';
     echo '<h2 class="nav-tab-wrapper">';
@@ -94,10 +98,10 @@ function modifus_smtp_custom_footer_credit($footer_text) {
     if ($screen && strpos($screen->base, 'modifus-smtp') !== false) {
         $custom_credit = sprintf(
             /* translators: 1: plugin link, 2: version number, 3: Modifus link */
-            '<span style="font-style: italic;">' . __('You\'re using %1$s v%2$s by %3$s', 'modifus-smtp') . '</span><br>',
-            '<a href="https://modifus.com/plugins/modifus-smtp" target="_blank" style="text-decoration:underline;">Modifus SMTP</a>',
+            '<span class="modifus-smtp-credit">' . __('You\'re using %1$s v%2$s by %3$s', 'modifus-smtp') . '</span><br>',
+            '<a href="https://modifus.com/plugins/modifus-smtp" target="_blank">Modifus SMTP</a>',
             MODIFUS_SMTP_VERSION,
-            '<a href="https://modifus.com" target="_blank" style="text-decoration:underline;">Modifus</a>'
+            '<a href="https://modifus.com" target="_blank">Modifus</a>'
         );
         return $custom_credit . $footer_text;
     }
