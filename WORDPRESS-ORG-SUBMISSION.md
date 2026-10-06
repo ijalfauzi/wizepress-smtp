@@ -17,7 +17,6 @@ The release zip is built with `./build-release.sh` and creates `modifus-smtp-2.0
 - [ ] Turn on two-factor authentication for that account (Profile → Account & Security). Plugin committers need it.
 - [ ] Check that `https://modifus.com/plugins/modifus-smtp` (Plugin URI) and `https://modifus.com` (Author URI) load. Reviewers check both, and they must point to different pages.
 - [ ] Allow emails from `plugins@wordpress.org` and `*@wordpress.org` so review emails don't land in spam.
-- [ ] Optional: GitHub repo name. The repo is still called `wizepress-smtp`. That doesn't matter for WordPress.org, but renaming it to `modifus-smtp` avoids confusion.
 
 ## Submit
 
