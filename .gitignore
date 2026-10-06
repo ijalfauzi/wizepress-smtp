@@ -9,5 +9,5 @@ vendor/
 *.bak
 *.tmp
 
-# Local Claude Code settings
+# Local editor settings
 .claude/
